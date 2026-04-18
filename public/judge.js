@@ -88,8 +88,8 @@ function renderTeamStatus(teams) {
       (team, index) => `
       <article class="station-item">
         <h3>${getTeamLabel(team, index + 1)} · ${team.points} 分</h3>
-        <p><strong>当前放行到：</strong>${team.releasedStationOrder || 1}</p>
-        <p><strong>已完成主线：</strong>${team.solvedStations?.length || 0} 个</p>
+        <p><strong>当前放行到：</strong>${team.releasedStationOrder || 1}号地点</p>
+        <p><strong>已完成地点：</strong>${team.solvedStations?.length || 0} 个</p>
         <p><strong>已购线索：</strong>${Object.values(team.boughtHints || {}).reduce((sum, item) => sum + Number(item || 0), 0)} 条</p>
       </article>
     `
@@ -167,9 +167,9 @@ elements.releaseNextForm.addEventListener('submit', async (event) => {
     });
 
     if (result.isMax) {
-      setReleaseResult('该组已放行到最后一条主线。', 'ok');
+      setReleaseResult('该组已放行到最后一个地点。', 'ok');
     } else {
-      setReleaseResult(`放行成功，当前已放行到主线 ${result.releasedStationOrder}。`, 'ok');
+      setReleaseResult(`放行成功，当前已放行到 ${result.releasedStationOrder}号地点。`, 'ok');
     }
     await refreshJudge();
   } catch (error) {

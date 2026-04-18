@@ -154,7 +154,7 @@ function renderActiveTeamState() {
 
   const bigRiddles = state.stations;
   if (!Array.isArray(bigRiddles) || !bigRiddles.length) {
-    elements.bigRiddlesList.textContent = '大谜题暂未配置，请联系裁判。';
+    elements.bigRiddlesList.textContent = '地点谜题暂未配置，请联系裁判。';
   } else {
     elements.bigRiddlesList.innerHTML = bigRiddles
       .map((station) => {
@@ -180,7 +180,7 @@ function renderActiveTeamState() {
   const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
   const routeUnlocked = solvedStations.includes('s1');
   if (!routeUnlocked) {
-    elements.routeRiddlesList.textContent = '先解出主线A，再解这段路上的小谜题。';
+    elements.routeRiddlesList.textContent = '先解出A地点，再解这段路上的小谜题。';
     return;
   }
 

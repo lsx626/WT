@@ -416,7 +416,7 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
       answer: null,
       result: 'release-next',
       delta: 0,
-      reason: `裁判放行主线 ${team.releasedStationOrder}`,
+      reason: `裁判放行 ${team.releasedStationOrder}号地点`,
       at: new Date().toISOString()
     });
 
@@ -561,7 +561,7 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
       }
 
       if (!team.solvedStations.includes('s1')) {
-        throw new HttpError(400, '请先解出主线A，再作答路线小谜题。');
+        throw new HttpError(400, '请先解出A地点，再作答路线小谜题。');
       }
 
       if (team.solvedRouteQuestions.includes(routeQuestionId)) {
@@ -612,7 +612,7 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     }
 
     if (Number(station.order || 0) > Number(team.releasedStationOrder || 1)) {
-      throw new HttpError(400, '该主线尚未由裁判放行。');
+      throw new HttpError(400, '该地点尚未由裁判放行。');
     }
 
     if (team.solvedStations.includes(stationId)) {
