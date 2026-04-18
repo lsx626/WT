@@ -1,0 +1,14 @@
+{
+  "name": "campus-orienteering-site",
+  "version": "1.0.0",
+  "description": "班级校园定向活动网站",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nanoid": "^5.0.8"
+  }
+}
