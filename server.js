@@ -6,6 +6,7 @@ const { nanoid } = require('nanoid');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
+const JUDGE_PASSWORD = '777777';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -42,6 +43,52 @@ function isValidHalfStepNumber(value) {
   return Number.isInteger(value * 2);
 }
 
+function parseCookies(req) {
+  const cookieHeader = req.headers.cookie || '';
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return cookieHeader.split(';').reduce((acc, pair) => {
+    const [key, ...rest] = pair.trim().split('=');
+    if (!key) {
+      return acc;
+    }
+    acc[key] = decodeURIComponent(rest.join('='));
+    return acc;
+  }, {});
+}
+
+function isJudgeAuthed(req) {
+  return parseCookies(req).judge_auth === '1';
+}
+
+function requireJudgeAuth(req, res, next) {
+  if (!isJudgeAuthed(req)) {
+    return res.status(401).json({ message: '裁判端未登录。' });
+  }
+  return next();
+}
+
+app.get('/api/judge/session', (req, res) => {
+  res.json({ authed: isJudgeAuthed(req) });
+});
+
+app.post('/api/judge/login', (req, res) => {
+  const { password } = req.body || {};
+  if (String(password || '') !== JUDGE_PASSWORD) {
+    return res.status(401).json({ message: '密码错误。' });
+  }
+
+  res.setHeader('Set-Cookie', 'judge_auth=1; Path=/; Max-Age=86400; SameSite=Lax; HttpOnly');
+  return res.json({ ok: true });
+});
+
+app.post('/api/judge/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'judge_auth=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly');
+  res.json({ ok: true });
+});
+
 app.get('/api/teams', async (_, res) => {
   const db = await readDb();
   res.json(
@@ -74,7 +121,7 @@ app.post('/api/teams', async (req, res) => {
   res.status(201).json(team);
 });
 
-app.patch('/api/teams/:teamId/points', async (req, res) => {
+app.patch('/api/teams/:teamId/points', requireJudgeAuth, async (req, res) => {
   const { teamId } = req.params;
   const { delta, reason = '人工调整' } = req.body || {};
   const parsedDelta = Number(delta);
@@ -243,6 +290,14 @@ app.post('/api/answer', async (req, res) => {
     gained: station.points,
     message: station.points > 0 ? `回答正确，+${station.points} 分！` : '谜题验证通过，请前往对应点位完成挑战。'
   });
+});
+
+app.get('/judge', (_, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'judge.html'));
+});
+
+app.get('/player', (_, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('*', (_, res) => {

@@ -13,7 +13,8 @@
     <header class="hero">
       <p class="tag">Campus Orienteering</p>
       <h1>班级校园定向活动平台</h1>
-      <p class="subtitle">建小组、做任务、答题拿线索，积分榜实时刷新。</p>
+      <p class="subtitle">玩家端：选组后答题和买线索，组内进度自动同步。</p>
+      <p class="portal-link"><a href="/judge">进入裁判端</a></p>
     </header>
 
     <main class="layout">
@@ -64,25 +65,6 @@
         <div id="hint-result" class="result"></div>
       </section>
 
-      <section class="card" id="manual-score-card">
-        <h2>裁判手动调分</h2>
-        <form id="manual-score-form">
-          <label>
-            选择小组
-            <select id="manual-team" required></select>
-          </label>
-          <label>
-            调整分值（可负数）
-            <input id="manual-delta" type="number" step="0.5" required value="0.5" />
-          </label>
-          <label>
-            原因备注
-            <input id="manual-reason" placeholder="例如：额外挑战完成" />
-          </label>
-          <button type="submit">确认调分</button>
-        </form>
-      </section>
-
       <section class="card wide" id="stations-card">
         <h2>任务关卡</h2>
         <div id="stations-list" class="stations"></div>
@@ -99,10 +81,6 @@
         </div>
       </section>
 
-      <section class="card wide" id="leaderboard-card">
-        <h2>实时积分榜</h2>
-        <div id="leaderboard" class="leaderboard"></div>
-      </section>
     </main>
 
     <script src="app.js"></script>

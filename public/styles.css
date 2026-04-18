@@ -80,6 +80,21 @@ h1 {
   color: var(--ink-sub);
 }
 
+.portal-link {
+  margin: 10px 0 0;
+}
+
+.portal-link a {
+  color: #8d2e00;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px dashed #c06b3e;
+}
+
+.portal-link a:hover {
+  color: #5e1f00;
+}
+
 .layout {
   width: min(1120px, 94vw);
   margin: 20px auto 48px;
@@ -132,6 +147,10 @@ h1 {
   display: grid;
   gap: 10px;
   min-width: 0;
+}
+
+.setup-single {
+  max-width: 460px;
 }
 
 .setup-hint {
@@ -225,6 +244,22 @@ button:hover {
   box-shadow: 0 8px 16px rgba(152, 63, 10, 0.25);
 }
 
+.secondary-btn {
+  min-height: 36px;
+  width: auto;
+  padding: 6px 12px;
+  background: #fff;
+  color: #8d2e00;
+  border: 1px solid #d7b598;
+  box-shadow: none;
+}
+
+.secondary-btn:hover {
+  transform: none;
+  box-shadow: none;
+  background: #fff7f1;
+}
+
 .result {
   margin-top: 12px;
   min-height: 48px;
@@ -284,44 +319,6 @@ button:hover {
   overflow-wrap: anywhere;
 }
 
-.leaderboard {
-  display: grid;
-  gap: 10px;
-}
-
-.rank-item {
-  display: grid;
-  grid-template-columns: 64px 1fr auto;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: #fff;
-}
-
-.rank-item .rank {
-  font-size: 22px;
-  font-weight: 800;
-  color: #975938;
-}
-
-.rank-item .name {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.rank-item .meta {
-  color: var(--ink-sub);
-  font-size: 13px;
-}
-
-.rank-item .point {
-  font-size: 18px;
-  font-weight: 800;
-  color: #7f2f00;
-}
-
 @media (max-width: 980px) {
   .card,
   .card.wide {
@@ -368,14 +365,6 @@ button:hover {
     font-size: clamp(26px, 7vw, 38px);
   }
 
-  .rank-item {
-    grid-template-columns: 48px 1fr;
-  }
-
-  .rank-item .point {
-    grid-column: 2;
-    justify-self: end;
-  }
 }
 
 @keyframes fadeUp {

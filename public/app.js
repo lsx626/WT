@@ -13,11 +13,6 @@ const elements = {
   hintTeamName: document.querySelector('#hint-team-name'),
   hintStation: document.querySelector('#hint-station'),
   hintResult: document.querySelector('#hint-result'),
-  manualScoreForm: document.querySelector('#manual-score-form'),
-  manualTeam: document.querySelector('#manual-team'),
-  manualDelta: document.querySelector('#manual-delta'),
-  manualReason: document.querySelector('#manual-reason'),
-  leaderboard: document.querySelector('#leaderboard'),
   stationsList: document.querySelector('#stations-list')
 };
 
@@ -63,19 +58,19 @@ async function request(url, options) {
   return data;
 }
 
-function setResult(message, state) {
+function setResult(message, resultState) {
   elements.answerResult.textContent = message;
   elements.answerResult.classList.remove('ok', 'bad');
-  if (state) {
-    elements.answerResult.classList.add(state);
+  if (resultState) {
+    elements.answerResult.classList.add(resultState);
   }
 }
 
-function setHintResult(message, state) {
+function setHintResult(message, resultState) {
   elements.hintResult.textContent = message;
   elements.hintResult.classList.remove('ok', 'bad');
-  if (state) {
-    elements.hintResult.classList.add(state);
+  if (resultState) {
+    elements.hintResult.classList.add(resultState);
   }
 }
 
@@ -111,8 +106,7 @@ function fillTeamSelects(teams) {
     .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}（${team.points} 分）</option>`)
     .join('');
 
-  elements.setupExistingTeam.innerHTML = html || '<option value="">暂无组别，请联系管理员预置</option>';
-  elements.manualTeam.innerHTML = html || '<option value="">暂无小组，请先创建</option>';
+  elements.setupExistingTeam.innerHTML = html || '<option value="">暂无组别，请联系裁判</option>';
 }
 
 function renderActiveTeamState() {
@@ -130,31 +124,9 @@ function renderActiveTeamState() {
   elements.teamSetupCard.hidden = true;
   elements.activeTeamCard.hidden = false;
   const label = getTeamLabel(activeTeam, state.teams.findIndex((team) => team.id === activeTeam.id) + 1);
-  elements.activeTeamDisplay.textContent = `${label}（${activeTeam.points} 分）已锁定`;
+  elements.activeTeamDisplay.textContent = `${label}（${activeTeam.points} 分）已锁定，组内提交会自动同步`;
   elements.answerTeamName.textContent = `${label}（${activeTeam.points} 分）`;
   elements.hintTeamName.textContent = `${label}（${activeTeam.points} 分）`;
-}
-
-function renderLeaderboard(items) {
-  if (!items.length) {
-    elements.leaderboard.innerHTML = '<p>还没有队伍，先创建一支吧。</p>';
-    return;
-  }
-
-  elements.leaderboard.innerHTML = items
-    .map(
-      (item) => `
-      <div class="rank-item">
-        <div class="rank">#${item.rank}</div>
-        <div>
-          <div class="name">${item.name}</div>
-          <div class="meta">完成关卡 ${item.solvedCount} 个</div>
-        </div>
-        <div class="point">${item.points} 分</div>
-      </div>
-    `
-    )
-    .join('');
 }
 
 function renderStations(stations) {
@@ -181,20 +153,17 @@ function renderStations(stations) {
 }
 
 async function refreshAll() {
-  const [teams, stations, leaderboard] = await Promise.all([
-    request('/api/teams'),
-    request('/api/stations'),
-    request('/api/leaderboard')
-  ]);
+  const [teams, stations] = await Promise.all([request('/api/teams'), request('/api/stations')]);
 
   state.teams = teams;
   state.stations = stations;
   if (!state.activeTeamId) {
     state.activeTeamId = getSavedActiveTeamId();
   }
+
   fillTeamSelects(teams);
   renderStations(stations);
-  renderLeaderboard(leaderboard);
+
   if (state.activeTeamId && !getActiveTeam()) {
     clearActiveTeam();
   } else {
@@ -208,12 +177,6 @@ elements.chooseTeamForm.addEventListener('submit', async (event) => {
   const selectedTeamId = elements.setupExistingTeam.value;
   if (!selectedTeamId) {
     alert('请先选择一个组别。');
-    return;
-  }
-
-  const selectedTeam = state.teams.find((team) => team.id === selectedTeamId);
-  if (!selectedTeam) {
-    alert('所选组别不存在，请刷新后重试。');
     return;
   }
 
@@ -276,25 +239,12 @@ elements.buyHintForm.addEventListener('submit', async (event) => {
   }
 });
 
-elements.manualScoreForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  try {
-    await request(`/api/teams/${elements.manualTeam.value}/points`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        delta: Number(elements.manualDelta.value),
-        reason: elements.manualReason.value || '人工调整'
-      })
-    });
-
-    elements.manualReason.value = '';
-    await refreshAll();
-  } catch (error) {
-    alert(error.message);
-  }
-});
-
-refreshAll().catch((error) => {
-  setResult(`初始化失败：${error.message}`, 'bad');
-});
+refreshAll()
+  .then(() => {
+    setInterval(() => {
+      refreshAll().catch(() => {});
+    }, 5000);
+  })
+  .catch((error) => {
+    setResult(`初始化失败：${error.message}`, 'bad');
+  });

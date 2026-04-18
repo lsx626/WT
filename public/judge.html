@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>裁判端 - 班级校园定向活动</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <header class="hero">
+      <p class="tag">Campus Orienteering</p>
+      <h1>裁判端管理台</h1>
+      <p class="subtitle">调分、查看各组进度，页面自动刷新同步。</p>
+      <p class="portal-link"><a href="/">返回玩家端</a></p>
+    </header>
+
+    <main class="layout">
+      <section class="card" id="judge-login-card">
+        <h2>裁判端登录</h2>
+        <form id="judge-login-form">
+          <label>
+            输入六位密码
+            <input id="judge-password" type="password" maxlength="6" minlength="6" required placeholder="请输入密码" />
+          </label>
+          <button type="submit">登录裁判端</button>
+        </form>
+        <div id="judge-login-result" class="result"></div>
+      </section>
+
+      <section class="card" id="manual-score-card" hidden>
+        <h2>手动调分</h2>
+        <div class="card-subtitle"><button id="judge-logout-btn" class="secondary-btn" type="button">退出裁判端</button></div>
+        <form id="manual-score-form">
+          <label>
+            选择小组
+            <select id="manual-team" required></select>
+          </label>
+          <label>
+            调整分值（可负数，0.5步长）
+            <input id="manual-delta" type="number" step="0.5" required value="0.5" />
+          </label>
+          <label>
+            原因备注
+            <input id="manual-reason" placeholder="例如：路线小题完成" />
+          </label>
+          <button type="submit">确认调分</button>
+        </form>
+        <div id="judge-result" class="result"></div>
+      </section>
+
+      <section class="card wide" id="team-status-card" hidden>
+        <h2>小组进度</h2>
+        <div id="team-status-list" class="stations"></div>
+      </section>
+    </main>
+
+    <script src="judge.js"></script>
+  </body>
+</html>
