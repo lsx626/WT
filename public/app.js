@@ -87,6 +87,16 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function getStationCode(stationOrder) {
+  if (stationOrder >= 1 && stationOrder <= 4) {
+    return String.fromCharCode('A'.charCodeAt(0) + stationOrder - 1);
+  }
+  if (stationOrder === 5) {
+    return 'X';
+  }
+  return String(stationOrder || '');
+}
+
 function getTeamLabel(team, fallbackNumber = 0) {
   if (Number.isInteger(team?.number)) {
     return `${team.number}号组`;
@@ -148,9 +158,10 @@ function renderActiveTeamState() {
     elements.bigRiddlesList.innerHTML = bigRiddles
       .map((station) => {
         const solved = solvedStations.includes(station.id);
+        const stationCode = getStationCode(Number(station.order || 0));
         return `
           <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-            <p class="route-riddle-question">${station.order}. ${escapeHtml(station.title)}</p>
+            <p class="route-riddle-question">${stationCode}. ${escapeHtml(station.title)}</p>
             <p class="route-riddle-question">${escapeHtml(station.question)}</p>
             <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分${solved ? ' | 已答对并锁定' : ''}</p>
             <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
@@ -172,6 +183,7 @@ function renderActiveTeamState() {
   elements.routeRiddlesList.innerHTML = routeRiddles
     .map((riddle) => {
       const solved = solvedRouteQuestions.includes(riddle.id);
+      const code = String(riddle.code || riddle.order || '');
       const formatHint = String(riddle.formatHint || '').trim();
       const points = Number(riddle.points || 0);
       const metaText = [formatHint ? `作答格式：${formatHint}` : '', `分值：${points} 分`]
@@ -180,7 +192,7 @@ function renderActiveTeamState() {
 
       return `
         <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-          <p class="route-riddle-question">${riddle.order}. ${escapeHtml(riddle.question)}</p>
+          <p class="route-riddle-question">${escapeHtml(code)}. ${escapeHtml(riddle.question)}</p>
           <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
           <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
             <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />

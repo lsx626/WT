@@ -196,6 +196,20 @@ function getRouteKeyByTeamNumber(routeQuestions, teamNumber) {
   return routeKeys[routeIndex];
 }
 
+function getRouteLetter(routeQuestions, routeKey) {
+  if (!routeKey) {
+    return 'A';
+  }
+
+  const routeKeys = Object.keys(routeQuestions || {}).sort();
+  const routeIndex = routeKeys.indexOf(routeKey);
+  if (routeIndex < 0) {
+    return 'A';
+  }
+
+  return String.fromCharCode('A'.charCodeAt(0) + routeIndex);
+}
+
 function getTeamRouteQuestionByOrder(db, team, order) {
   const routeKey = getRouteKeyByTeamNumber(db.routeQuestions, team?.number);
   if (!routeKey) {
@@ -265,6 +279,7 @@ app.get('/api/teams', async (_, res) => {
     db.teams.map((team, index) => {
       const normalizedNumber = Number.isInteger(team.number) ? team.number : index + 1;
       const routeKey = getRouteKeyByTeamNumber(db.routeQuestions, normalizedNumber);
+      const routeLetter = getRouteLetter(db.routeQuestions, routeKey);
       const routeQuestions = routeKey ? (db.routeQuestions?.[routeKey] || []) : [];
       const firstQuestion = routeQuestions[0] || null;
 
@@ -276,28 +291,31 @@ app.get('/api/teams', async (_, res) => {
         solvedStations: Array.isArray(team.solvedStations) ? team.solvedStations : [],
         clues: Array.isArray(team.clues) ? team.clues : [],
         boughtHints: team.boughtHints && typeof team.boughtHints === 'object' ? team.boughtHints : {},
-      routeRiddles: (() => {
-        return routeQuestions.map((item, itemIndex) => ({
-          id: item.id,
-          order: itemIndex + 1,
-          question: item.question,
-          formatHint: item.formatHint || '',
-          points: Number(item.points || 0)
-        }));
-      })(),
-      firstRiddle: (() => {
-        if (!firstQuestion) {
-          return null;
-        }
+        routeRiddles: (() => {
+          return routeQuestions.map((item, itemIndex) => ({
+            id: item.id,
+            order: itemIndex + 1,
+            code: `${routeLetter}${itemIndex + 1}`,
+            question: item.question,
+            formatHint: item.formatHint || '',
+            points: Number(item.points || 0)
+          }));
+        })(),
+        firstRiddle: (() => {
+          if (!firstQuestion) {
+            return null;
+          }
 
-        return {
-          routeKey,
-          id: firstQuestion.id,
-          question: firstQuestion.question,
-          formatHint: firstQuestion.formatHint || '',
-          points: Number(firstQuestion.points || 0)
-        };
-      })()
+          return {
+            routeKey,
+            routeLetter,
+            id: firstQuestion.id,
+            code: `${routeLetter}1`,
+            question: firstQuestion.question,
+            formatHint: firstQuestion.formatHint || '',
+            points: Number(firstQuestion.points || 0)
+          };
+        })()
       };
     })
   );
