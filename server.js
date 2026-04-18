@@ -237,6 +237,9 @@ function ensureTeamProgressStructure(team) {
   if (!team.boughtHints || typeof team.boughtHints !== 'object') {
     team.boughtHints = {};
   }
+  if (!Number.isInteger(team.releasedStationOrder) || team.releasedStationOrder < 1) {
+    team.releasedStationOrder = 1;
+  }
 }
 
 app.get('/api/judge/session', (req, res) => {
@@ -291,6 +294,9 @@ app.get('/api/teams', async (_, res) => {
         solvedStations: Array.isArray(team.solvedStations) ? team.solvedStations : [],
         clues: Array.isArray(team.clues) ? team.clues : [],
         boughtHints: team.boughtHints && typeof team.boughtHints === 'object' ? team.boughtHints : {},
+        releasedStationOrder: Number.isInteger(team.releasedStationOrder) && team.releasedStationOrder > 0
+          ? team.releasedStationOrder
+          : 1,
         routeRiddles: (() => {
           return routeQuestions.map((item, itemIndex) => ({
             id: item.id,
@@ -337,6 +343,7 @@ app.post(
         solvedRouteQuestions: [],
         clues: [],
         boughtHints: {},
+        releasedStationOrder: 1,
         createdAt: new Date().toISOString()
       };
 
@@ -379,6 +386,47 @@ app.patch('/api/teams/:teamId/points', requireJudgeAuth, asyncHandler(async (req
   });
 
   res.json(team);
+}));
+
+app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async (req, res) => {
+  const { teamId } = req.params;
+  const payload = await mutateDb((db) => {
+    const team = db.teams.find((item) => item.id === teamId);
+    if (!team) {
+      throw new HttpError(404, '队伍不存在。');
+    }
+    ensureTeamProgressStructure(team);
+
+    const maxOrder = Array.isArray(db.stations) && db.stations.length
+      ? Math.max(...db.stations.map((station) => Number(station.order || 0)))
+      : 1;
+
+    if (team.releasedStationOrder >= maxOrder) {
+      return {
+        releasedStationOrder: team.releasedStationOrder,
+        isMax: true
+      };
+    }
+
+    team.releasedStationOrder += 1;
+    db.submissions.push({
+      id: nanoid(10),
+      teamId,
+      stationId: null,
+      answer: null,
+      result: 'release-next',
+      delta: 0,
+      reason: `裁判放行主线 ${team.releasedStationOrder}`,
+      at: new Date().toISOString()
+    });
+
+    return {
+      releasedStationOrder: team.releasedStationOrder,
+      isMax: false
+    };
+  });
+
+  res.json(payload);
 }));
 
 app.post('/api/stations/:stationId/hint', asyncHandler(async (req, res) => {
@@ -512,6 +560,10 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
         throw new HttpError(404, '路线小谜题不存在。');
       }
 
+      if (!team.solvedStations.includes('s1')) {
+        throw new HttpError(400, '请先解出主线A，再作答路线小谜题。');
+      }
+
       if (team.solvedRouteQuestions.includes(routeQuestionId)) {
         return {
           correct: true,
@@ -557,6 +609,10 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     const station = db.stations.find((item) => item.id === stationId);
     if (!station) {
       throw new HttpError(404, '关卡不存在。');
+    }
+
+    if (Number(station.order || 0) > Number(team.releasedStationOrder || 1)) {
+      throw new HttpError(400, '该主线尚未由裁判放行。');
     }
 
     if (team.solvedStations.includes(stationId)) {

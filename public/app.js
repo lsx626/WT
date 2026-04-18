@@ -150,6 +150,7 @@ function renderActiveTeamState() {
 
   const solvedStations = Array.isArray(activeTeam.solvedStations) ? activeTeam.solvedStations : [];
   const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
+  const releasedStationOrder = Number(activeTeam.releasedStationOrder || 1);
 
   const bigRiddles = state.stations;
   if (!Array.isArray(bigRiddles) || !bigRiddles.length) {
@@ -158,15 +159,17 @@ function renderActiveTeamState() {
     elements.bigRiddlesList.innerHTML = bigRiddles
       .map((station) => {
         const solved = solvedStations.includes(station.id);
-        const stationCode = getStationCode(Number(station.order || 0));
+        const lockedByJudge = Number(station.order || 0) > releasedStationOrder;
+        const disabled = solved || lockedByJudge;
+        const lockTip = solved ? ' | 已答对并锁定' : lockedByJudge ? ' | 待裁判放行' : '';
         return `
-          <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-            <p class="route-riddle-question">${stationCode}. ${escapeHtml(station.title)}</p>
+          <article class="route-riddle-item ${solved ? 'riddle-solved' : ''} ${lockedByJudge ? 'riddle-locked' : ''}">
+            <p class="route-riddle-question">${escapeHtml(station.title)}</p>
             <p class="route-riddle-question">${escapeHtml(station.question)}</p>
-            <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分${solved ? ' | 已答对并锁定' : ''}</p>
+            <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分${lockTip}</p>
             <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
-              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
-              <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
+              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
+              <button type="submit" ${disabled ? 'disabled' : ''}>${solved ? '已锁定' : lockedByJudge ? '待放行' : '提交答案'}</button>
             </form>
           </article>
         `;
@@ -175,6 +178,12 @@ function renderActiveTeamState() {
   }
 
   const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
+  const routeUnlocked = solvedStations.includes('s1');
+  if (!routeUnlocked) {
+    elements.routeRiddlesList.textContent = '先解出主线A，再解这段路上的小谜题。';
+    return;
+  }
+
   if (!routeRiddles.length) {
     elements.routeRiddlesList.textContent = '该组路线谜题暂未配置，请联系裁判。';
     return;
@@ -183,7 +192,6 @@ function renderActiveTeamState() {
   elements.routeRiddlesList.innerHTML = routeRiddles
     .map((riddle) => {
       const solved = solvedRouteQuestions.includes(riddle.id);
-      const code = String(riddle.code || riddle.order || '');
       const formatHint = String(riddle.formatHint || '').trim();
       const points = Number(riddle.points || 0);
       const metaText = [formatHint ? `作答格式：${formatHint}` : '', `分值：${points} 分`]
@@ -192,7 +200,7 @@ function renderActiveTeamState() {
 
       return `
         <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-          <p class="route-riddle-question">${escapeHtml(code)}. ${escapeHtml(riddle.question)}</p>
+          <p class="route-riddle-question">${escapeHtml(riddle.question)}</p>
           <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
           <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
             <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />

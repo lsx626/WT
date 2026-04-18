@@ -201,6 +201,11 @@ h1 {
   background: color-mix(in srgb, var(--ok) 12%, white 88%);
 }
 
+.route-riddle-item.riddle-locked {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
 .route-riddle-question {
   margin: 0;
   color: var(--ink);

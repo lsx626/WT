@@ -9,6 +9,7 @@
       "solvedStations": [
         "s1"
       ],
+      "releasedStationOrder": 1,
       "clues": [
         {
           "stationId": "s1",
@@ -26,6 +27,7 @@
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
       "createdAt": "2026-04-18T00:00:01.000Z"
@@ -37,6 +39,7 @@
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
       "createdAt": "2026-04-18T00:00:02.000Z"
@@ -48,6 +51,7 @@
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
       "createdAt": "2026-04-18T00:00:03.000Z"

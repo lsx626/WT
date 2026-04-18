@@ -10,6 +10,9 @@ const elements = {
   manualDelta: document.querySelector('#manual-delta'),
   manualReason: document.querySelector('#manual-reason'),
   judgeResult: document.querySelector('#judge-result'),
+  releaseNextForm: document.querySelector('#release-next-form'),
+  releaseTeam: document.querySelector('#release-team'),
+  releaseResult: document.querySelector('#release-result'),
   teamStatusCard: document.querySelector('#team-status-card'),
   teamStatusList: document.querySelector('#team-status-list')
 };
@@ -56,6 +59,14 @@ function setJudgeLoginResult(message, resultState) {
   }
 }
 
+function setReleaseResult(message, resultState) {
+  elements.releaseResult.textContent = message;
+  elements.releaseResult.classList.remove('ok', 'bad');
+  if (resultState) {
+    elements.releaseResult.classList.add(resultState);
+  }
+}
+
 function setJudgeAuthed(authed) {
   elements.judgeLoginCard.hidden = authed;
   elements.manualScoreCard.hidden = !authed;
@@ -68,6 +79,7 @@ function fillTeamSelect(teams) {
     .join('');
 
   elements.manualTeam.innerHTML = html || '<option value="">暂无小组</option>';
+  elements.releaseTeam.innerHTML = html || '<option value="">暂无小组</option>';
 }
 
 function renderTeamStatus(teams) {
@@ -76,7 +88,8 @@ function renderTeamStatus(teams) {
       (team, index) => `
       <article class="station-item">
         <h3>${getTeamLabel(team, index + 1)} · ${team.points} 分</h3>
-        <p><strong>已解锁关卡：</strong>${team.solvedStations?.length || 0} 个</p>
+        <p><strong>当前放行到：</strong>${team.releasedStationOrder || 1}</p>
+        <p><strong>已完成主线：</strong>${team.solvedStations?.length || 0} 个</p>
         <p><strong>已购线索：</strong>${Object.values(team.boughtHints || {}).reduce((sum, item) => sum + Number(item || 0), 0)} 条</p>
       </article>
     `
@@ -144,6 +157,26 @@ elements.manualScoreForm.addEventListener('submit', async (event) => {
   }
 });
 
+elements.releaseNextForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  try {
+    const teamId = elements.releaseTeam.value;
+    const result = await request(`/api/teams/${teamId}/release-next`, {
+      method: 'POST'
+    });
+
+    if (result.isMax) {
+      setReleaseResult('该组已放行到最后一条主线。', 'ok');
+    } else {
+      setReleaseResult(`放行成功，当前已放行到主线 ${result.releasedStationOrder}。`, 'ok');
+    }
+    await refreshJudge();
+  } catch (error) {
+    setReleaseResult(error.message, 'bad');
+  }
+});
+
 async function bootstrapJudge() {
   try {
     const session = await request('/api/judge/session');
@@ -152,7 +185,7 @@ async function bootstrapJudge() {
     if (session.authed) {
       await refreshJudge();
     } else {
-      setJudgeLoginResult('请输入六位密码 777777 进入裁判端。', '');
+      setJudgeLoginResult('请输入密码进入裁判端。', '');
     }
   } catch (error) {
     setJudgeLoginResult(`初始化失败：${error.message}`, 'bad');
