@@ -4,16 +4,13 @@ const elements = {
   activeTeamDisplay: document.querySelector('#active-team-display'),
   setupExistingTeam: document.querySelector('#setup-existing-team'),
   chooseTeamForm: document.querySelector('#choose-team-form'),
-  answerForm: document.querySelector('#answer-form'),
-  answerTeamName: document.querySelector('#answer-team-name'),
-  answerStation: document.querySelector('#answer-station'),
-  answerInput: document.querySelector('#answer-input'),
+  bigRiddlesList: document.querySelector('#big-riddles-list'),
+  firstRiddleBox: document.querySelector('#first-riddle-box'),
+  routeRiddlesList: document.querySelector('#route-riddles-list'),
   answerResult: document.querySelector('#answer-result'),
   buyHintForm: document.querySelector('#buy-hint-form'),
-  hintTeamName: document.querySelector('#hint-team-name'),
   hintStation: document.querySelector('#hint-station'),
-  hintResult: document.querySelector('#hint-result'),
-  stationsList: document.querySelector('#stations-list')
+  hintResult: document.querySelector('#hint-result')
 };
 
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
@@ -51,10 +48,17 @@ async function request(url, options) {
     ...options
   });
 
-  const data = await response.json().catch(() => ({}));
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  const isJson = contentType.includes('application/json');
+  const data = isJson ? await response.json().catch(() => ({})) : {};
   if (!response.ok) {
     throw new Error(data.message || '请求失败');
   }
+
+  if (!isJson) {
+    throw new Error('接口返回格式异常，请刷新页面后重试。');
+  }
+
   return data;
 }
 
@@ -72,6 +76,15 @@ function setHintResult(message, resultState) {
   if (resultState) {
     elements.hintResult.classList.add(resultState);
   }
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function getTeamLabel(team, fallbackNumber = 0) {
@@ -115,40 +128,73 @@ function renderActiveTeamState() {
   if (!activeTeam) {
     elements.teamSetupCard.hidden = false;
     elements.activeTeamCard.hidden = false;
-    elements.activeTeamDisplay.textContent = '尚未设置，请先完成首次组别设置。';
-    elements.answerTeamName.textContent = '未锁定';
-    elements.hintTeamName.textContent = '未锁定';
+    elements.activeTeamDisplay.textContent = '尚未设置组别';
+    elements.bigRiddlesList.textContent = '请先选择组别后开始作答。';
+    elements.routeRiddlesList.textContent = '请先选择组别后查看整条路线谜题。';
     return;
   }
 
   elements.teamSetupCard.hidden = true;
   elements.activeTeamCard.hidden = false;
-  const label = getTeamLabel(activeTeam, state.teams.findIndex((team) => team.id === activeTeam.id) + 1);
-  elements.activeTeamDisplay.textContent = `${label}（${activeTeam.points} 分）已锁定，组内提交会自动同步`;
-  elements.answerTeamName.textContent = `${label}（${activeTeam.points} 分）`;
-  elements.hintTeamName.textContent = `${label}（${activeTeam.points} 分）`;
+  elements.activeTeamDisplay.textContent = `${activeTeam.points} 分`;
+
+  const solvedStations = Array.isArray(activeTeam.solvedStations) ? activeTeam.solvedStations : [];
+  const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
+
+  const bigRiddles = state.stations;
+  if (!Array.isArray(bigRiddles) || !bigRiddles.length) {
+    elements.bigRiddlesList.textContent = '大谜题暂未配置，请联系裁判。';
+  } else {
+    elements.bigRiddlesList.innerHTML = bigRiddles
+      .map((station) => {
+        const solved = solvedStations.includes(station.id);
+        return `
+          <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
+            <p class="route-riddle-question">${station.order}. ${escapeHtml(station.title)}</p>
+            <p class="route-riddle-question">${escapeHtml(station.question)}</p>
+            <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分${solved ? ' | 已答对并锁定' : ''}</p>
+            <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
+              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
+            </form>
+          </article>
+        `;
+      })
+      .join('');
+  }
+
+  const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
+  if (!routeRiddles.length) {
+    elements.routeRiddlesList.textContent = '该组路线谜题暂未配置，请联系裁判。';
+    return;
+  }
+
+  elements.routeRiddlesList.innerHTML = routeRiddles
+    .map((riddle) => {
+      const solved = solvedRouteQuestions.includes(riddle.id);
+      const formatHint = String(riddle.formatHint || '').trim();
+      const points = Number(riddle.points || 0);
+      const metaText = [formatHint ? `作答格式：${formatHint}` : '', `分值：${points} 分`]
+        .filter(Boolean)
+        .join(' | ');
+
+      return `
+        <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
+          <p class="route-riddle-question">${riddle.order}. ${escapeHtml(riddle.question)}</p>
+          <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
+          <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
+            <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+            <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
+          </form>
+        </article>
+      `;
+    })
+    .join('');
 }
 
 function renderStations(stations) {
-  elements.answerStation.innerHTML = stations
-    .map((station) => `<option value="${station.id}">${station.order}. ${station.title}（${station.points} 分）</option>`)
-    .join('');
-
   elements.hintStation.innerHTML = stations
     .map((station) => `<option value="${station.id}">${station.order}. ${station.title}（可购线索 ${station.hintCount} 条）</option>`)
-    .join('');
-
-  elements.stationsList.innerHTML = stations
-    .map(
-      (station) => `
-      <article class="station-item">
-        <h3>${station.order}. ${station.title}</h3>
-        <p><strong>问题：</strong>${station.question}</p>
-        <p><strong>分值：</strong>${station.points} 分</p>
-        <p><strong>可购线索：</strong>${station.hintCount} 条</p>
-      </article>
-    `
-    )
     .join('');
 }
 
@@ -180,8 +226,12 @@ elements.chooseTeamForm.addEventListener('submit', async (event) => {
     return;
   }
 
-  setActiveTeam(selectedTeamId);
-  await refreshAll();
+  try {
+    setActiveTeam(selectedTeamId);
+    await refreshAll();
+  } catch (error) {
+    setResult(error.message, 'bad');
+  }
 });
 
 function requireActiveTeam() {
@@ -192,28 +242,70 @@ function requireActiveTeam() {
   return activeTeam;
 }
 
-elements.answerForm.addEventListener('submit', async (event) => {
+async function submitRiddleAnswer(answerType, itemId, answerText) {
+  const activeTeam = requireActiveTeam();
+  const body = {
+    teamId: activeTeam.id,
+    answer: answerText
+  };
+
+  if (answerType === 'station') {
+    body.stationId = itemId;
+  } else {
+    body.routeQuestionId = itemId;
+  }
+
+  const result = await request('/api/answer', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+
+  const status = result.correct ? 'ok' : 'bad';
+  const message = result.correct
+    ? `${result.message} 当前总分 ${result.points}。${result.clue ? `\n线索：${result.clue}` : ''}`
+    : result.message;
+
+  setResult(message, status);
+  await refreshAll();
+}
+
+elements.bigRiddlesList.addEventListener('submit', async (event) => {
+  const form = event.target.closest('.riddle-answer-form');
+  if (!form) {
+    return;
+  }
+
   event.preventDefault();
 
   try {
-    const activeTeam = requireActiveTeam();
-    const result = await request('/api/answer', {
-      method: 'POST',
-      body: JSON.stringify({
-        teamId: activeTeam.id,
-        stationId: elements.answerStation.value,
-        answer: elements.answerInput.value
-      })
-    });
+    const answerInput = form.querySelector('input[name="answer"]');
+    const answerText = String(answerInput?.value || '').trim();
+    if (!answerText) {
+      throw new Error('请输入答案后再提交。');
+    }
 
-    const status = result.correct ? 'ok' : 'bad';
-    const message = result.correct
-      ? `${result.message} 当前总分 ${result.points}。${result.clue ? `\n线索：${result.clue}` : ''}`
-      : result.message;
+    await submitRiddleAnswer('station', form.dataset.id, answerText);
+  } catch (error) {
+    setResult(error.message, 'bad');
+  }
+});
 
-    setResult(message, status);
-    elements.answerInput.value = '';
-    await refreshAll();
+elements.routeRiddlesList.addEventListener('submit', async (event) => {
+  const form = event.target.closest('.riddle-answer-form');
+  if (!form) {
+    return;
+  }
+
+  event.preventDefault();
+
+  try {
+    const answerInput = form.querySelector('input[name="answer"]');
+    const answerText = String(answerInput?.value || '').trim();
+    if (!answerText) {
+      throw new Error('请输入答案后再提交。');
+    }
+
+    await submitRiddleAnswer('route', form.dataset.id, answerText);
   } catch (error) {
     setResult(error.message, 'bad');
   }

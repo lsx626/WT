@@ -1,64 +1,10 @@
 {
-  "teams": [
-    {
-      "id": "team-1",
-      "number": 1,
-      "name": "1号组",
-      "members": [],
-      "points": 3,
-      "solvedStations": [
-        "s1"
-      ],
-      "clues": [
-        {
-          "stationId": "s1",
-          "clue": "终点线索 1：留意终点与学校精神口号相关。",
-          "at": "2026-04-18T17:59:34.566Z"
-        }
-      ],
-      "boughtHints": {},
-      "createdAt": "2026-04-18T00:00:00.000Z"
-    },
-    {
-      "id": "team-2",
-      "number": 2,
-      "name": "2号组",
-      "members": [],
-      "points": 3,
-      "solvedStations": [],
-      "clues": [],
-      "boughtHints": {},
-      "createdAt": "2026-04-18T00:00:01.000Z"
-    },
-    {
-      "id": "team-3",
-      "number": 3,
-      "name": "3号组",
-      "members": [],
-      "points": 3,
-      "solvedStations": [],
-      "clues": [],
-      "boughtHints": {},
-      "createdAt": "2026-04-18T00:00:02.000Z"
-    },
-    {
-      "id": "team-4",
-      "number": 4,
-      "name": "4号组",
-      "members": [],
-      "points": 3,
-      "solvedStations": [],
-      "clues": [],
-      "boughtHints": {},
-      "createdAt": "2026-04-18T00:00:03.000Z"
-    }
-  ],
   "stations": [
     {
       "id": "s1",
       "order": 1,
-      "title": "第一道谜题（起点 -> 第一处目的地）",
-      "question": "请填写你们线下拿到的第一道谜题答案。",
+      "title": "主线1（起点 -> 第一处）",
+      "question": "请输入主线1答案。",
       "answer": "叶耀珍楼",
       "clue": "终点线索 1：留意终点与学校精神口号相关。",
       "hints": [
@@ -70,8 +16,8 @@
     {
       "id": "s2",
       "order": 2,
-      "title": "第二道谜题（第一处 -> 第二处目的地）",
-      "question": "请填写你们线下拿到的第二道谜题答案。",
+      "title": "主线2（第一处 -> 第二处）",
+      "question": "请输入主线2答案。",
       "answer": "待填写",
       "clue": "终点线索 2：终点可能是日常班级常去地点。",
       "hints": [
@@ -83,8 +29,8 @@
     {
       "id": "s3",
       "order": 3,
-      "title": "第三道谜题（第二处 -> 第三处目的地）",
-      "question": "请填写你们线下拿到的第三道谜题答案。",
+      "title": "主线3（第二处 -> 第三处）",
+      "question": "请输入主线3答案。",
       "answer": "待填写",
       "clue": "终点线索 3：终点可容纳多人同时集结。",
       "hints": [
@@ -96,8 +42,8 @@
     {
       "id": "s4",
       "order": 4,
-      "title": "第四道谜题（第三处 -> 第四处目的地）",
-      "question": "请填写你们线下拿到的第四道谜题答案。",
+      "title": "主线4（第三处 -> 第四处）",
+      "question": "请输入主线4答案。",
       "answer": "待填写",
       "clue": "终点线索 4：终点与本次活动收尾展示有关。",
       "hints": [
@@ -109,8 +55,8 @@
     {
       "id": "s5",
       "order": 5,
-      "title": "终极谜题（四条终点线索 -> 终点）",
-      "question": "请填写终极谜题答案（即终点地点）。",
+      "title": "终极谜题（四条线索 -> 终点）",
+      "question": "请输入终极谜题答案（终点地点）。",
       "answer": "待填写",
       "clue": "到达终点后由裁判按先后顺序录入排名分。",
       "hints": [
@@ -298,52 +244,5 @@
         "points": 0.5
       }
     ]
-  },
-  "submissions": [
-    {
-      "id": "ja4QTiKDSE",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:51:00.119Z"
-    },
-    {
-      "id": "dlgPyksYgV",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:52:40.234Z"
-    },
-    {
-      "id": "axl4VSZ0IN",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:57:16.532Z"
-    },
-    {
-      "id": "WHwMR9Kzkc",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:59:04.883Z"
-    },
-    {
-      "id": "SYZ0KHtbvg",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "correct",
-      "delta": 0,
-      "at": "2026-04-18T17:59:34.566Z"
-    }
-  ]
+  }
 }

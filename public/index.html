@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>班级校园定向活动</title>
+    <title>此间循迹 | 玩家端</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,8 +11,8 @@
     <div class="bg-shape shape-2"></div>
 
     <header class="hero">
-      <p class="tag">Campus Orienteering</p>
-      <h1>班级校园定向活动平台</h1>
+      <p class="tag">Ci Jian Xun Ji</p>
+      <h1>此间循迹</h1>
       <p class="subtitle">玩家端：选组后答题和买线索，组内进度自动同步。</p>
       <p class="portal-link"><a href="/judge">进入裁判端</a></p>
     </header>
@@ -30,31 +30,26 @@
         </form>
       </section>
 
-      <section class="card wide" id="active-team-card">
-        <h2>当前组别</h2>
-        <div id="active-team-display" class="active-team">尚未设置，请先完成首次组别设置。</div>
+      <section class="card" id="active-team-card">
+        <h2>当前积分</h2>
+        <div id="active-team-display" class="active-team">尚未设置组别</div>
       </section>
 
       <section class="card" id="answer-card">
         <h2>答题获取线索</h2>
-        <div class="card-subtitle">当前组别：<span id="answer-team-name">未锁定</span></div>
-        <form id="answer-form">
-          <label>
-            选择关卡
-            <select id="answer-station" required></select>
-          </label>
-          <label>
-            输入答案
-            <input id="answer-input" required placeholder="请输入你们观察到的答案" />
-          </label>
-          <button type="submit">提交答案</button>
-        </form>
+        <div id="big-riddles-box" class="riddle-box">
+          <p class="riddle-title">大谜题（主线）</p>
+          <div id="big-riddles-list" class="route-riddles-list">请先选择组别后开始作答。</div>
+        </div>
+        <div id="first-riddle-box" class="riddle-box">
+          <p class="riddle-title">路线小谜题</p>
+          <div id="route-riddles-list" class="route-riddles-list">请先选择组别后查看整条路线谜题。</div>
+        </div>
         <div id="answer-result" class="result"></div>
       </section>
 
       <section class="card" id="buy-hint-card">
         <h2>购买谜题线索</h2>
-        <div class="card-subtitle">当前组别：<span id="hint-team-name">未锁定</span></div>
         <form id="buy-hint-form">
           <label>
             选择谜题
@@ -63,11 +58,6 @@
           <button type="submit">花 1 分购买下一条线索</button>
         </form>
         <div id="hint-result" class="result"></div>
-      </section>
-
-      <section class="card wide" id="stations-card">
-        <h2>任务关卡</h2>
-        <div id="stations-list" class="stations"></div>
       </section>
 
       <section class="card wide" id="rules-card">

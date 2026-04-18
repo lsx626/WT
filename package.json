@@ -1,7 +1,7 @@
 {
   "name": "campus-orienteering-site",
   "version": "1.0.0",
-  "description": "班级校园定向活动网站",
+  "description": "此间循迹校园定向活动网站",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
