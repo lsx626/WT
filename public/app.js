@@ -23,7 +23,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_6';
+const APP_DATA_VERSION = '20260419_5';
 
 function clearStaleClientState() {
   try {
@@ -929,9 +929,12 @@ async function buyStationHint(stationId) {
 
 async function submitFinalAnswer(answerText) {
   const activeTeam = requireActiveTeam();
-  const result = await request(`/api/teams/${activeTeam.id}/final-answer`, {
+  const result = await request('/api/final-answer', {
     method: 'POST',
-    body: JSON.stringify({ answer: answerText })
+    body: JSON.stringify({
+      teamId: activeTeam.id,
+      answer: answerText
+    })
   });
 
   setResult(result.message, result.correct ? 'ok' : 'bad');
