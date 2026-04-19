@@ -24,7 +24,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_9';
+const APP_DATA_VERSION = '20260419_10';
 
 function clearStaleClientState() {
   try {
