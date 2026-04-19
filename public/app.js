@@ -18,13 +18,14 @@ const elements = {
   finalAnswerBox: document.querySelector('#final-answer-box'),
   finalAnswerForm: document.querySelector('#final-answer-form'),
   finalAnswerInput: document.querySelector('#final-answer-input'),
-  finalAnswerSubmit: document.querySelector('#final-answer-submit')
+  finalAnswerSubmit: document.querySelector('#final-answer-submit'),
+  finalHintBtn: document.querySelector('#final-hint-btn')
 };
 
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_13';
+const APP_DATA_VERSION = '20260419_14';
 
 function clearStaleClientState() {
   try {
@@ -587,6 +588,10 @@ function renderActiveTeamState() {
     elements.finalAnswerSubmit.disabled = finalSolved;
     elements.finalAnswerSubmit.textContent = finalSolved ? '已验证通过' : '验证终点';
   }
+  if (elements.finalHintBtn) {
+    const finalSolved = activeTeam.finalAnswerVerified === true;
+    elements.finalHintBtn.disabled = finalSolved;
+  }
 
   const solvedStations = Array.isArray(activeTeam.solvedStations) ? activeTeam.solvedStations : [];
   const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
@@ -1128,6 +1133,33 @@ elements.finalAnswerInput?.addEventListener('input', (event) => {
 
   setAnswerInputError(input, false);
   setAnswerDraft(activeTeam.id, 'final', 'destination', input.value);
+});
+
+elements.finalHintBtn?.addEventListener('click', () => {
+  const activeTeam = getActiveTeam();
+  if (!activeTeam) {
+    setResult('请先选择组别。', 'bad');
+    return;
+  }
+
+  const finalClues = (Array.isArray(activeTeam.clues) ? activeTeam.clues : [])
+    .filter((item) => {
+      const text = String(item?.clue || '').trim();
+      const image = String(item?.clueImageUrl || '').trim();
+      return image.includes('final-clue.png') || /终极线索|终点线索/.test(text);
+    });
+
+  if (!finalClues.length) {
+    setResult('终点提示暂未解锁，请先完成并由裁判放行至最后地点。', 'bad');
+    return;
+  }
+
+  const textList = finalClues
+    .map((item) => String(item?.clue || '').trim())
+    .filter(Boolean);
+  const clueImageUrl = String(finalClues.find((item) => String(item?.clueImageUrl || '').trim())?.clueImageUrl || '').trim();
+  const hintText = textList.length ? textList.join('\n') : '终点线索已解锁。';
+  setResult(`提示：${hintText}`, 'ok', clueImageUrl);
 });
 
 refreshAll()
