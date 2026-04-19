@@ -23,9 +23,35 @@ const state = {
   teams: [],
   stations: [],
   nonogramDrafts: {},
+  answerDrafts: {},
   teamSwitchEnabled: true,
   expandedSolvedItems: new Set()
 };
+
+function getAnswerDraftKey(teamId, type, itemId) {
+  return `${teamId || ''}:${type || ''}:${itemId || ''}`;
+}
+
+function getAnswerDraft(teamId, type, itemId) {
+  return state.answerDrafts[getAnswerDraftKey(teamId, type, itemId)] || '';
+}
+
+function setAnswerDraft(teamId, type, itemId, value) {
+  const key = getAnswerDraftKey(teamId, type, itemId);
+  if (!key) {
+    return;
+  }
+  state.answerDrafts[key] = String(value || '');
+}
+
+function clearAnswerDraft(teamId, type, itemId) {
+  delete state.answerDrafts[getAnswerDraftKey(teamId, type, itemId)];
+}
+
+function isTypingInAnswerInput() {
+  const active = document.activeElement;
+  return Boolean(active && active.classList && active.classList.contains('riddle-answer-input'));
+}
 
 function getSolvedItemKey(kind, id) {
   return `${kind}:${id}`;
@@ -64,10 +90,17 @@ function getSavedActiveTeamId() {
 }
 
 async function request(url, options) {
-  const response = await fetch(url, {
+  const method = String(options?.method || 'GET').toUpperCase();
+  const shouldBypassCache = method === 'GET';
+  const requestUrl = shouldBypassCache
+    ? `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`
+    : url;
+
+  const response = await fetch(requestUrl, {
     headers: {
       'Content-Type': 'application/json'
     },
+    cache: 'no-store',
     ...options
   });
 
@@ -358,6 +391,7 @@ function renderActiveTeamState() {
         const purchasedHints = Array.isArray(activeTeam.purchasedHints?.[station.id])
           ? activeTeam.purchasedHints[station.id]
           : [];
+        const answerDraft = escapeHtml(getAnswerDraft(activeTeam.id, 'station', station.id));
         const boughtCount = purchasedHints.length;
         const hintCount = Number(station.hintCount || 0);
         const leftHints = Math.max(0, hintCount - boughtCount);
@@ -380,7 +414,7 @@ function renderActiveTeamState() {
               <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
               ${purchasedHintsHtml}
               <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
-                <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
+                <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
                 <div class="riddle-actions">
                   <button type="submit" ${disabled ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
                   <button
@@ -401,14 +435,14 @@ function renderActiveTeamState() {
 
   const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
   const routeUnlockStationId = activeTeam.routeUnlockStationId || stationSequence[0]?.id || 's1';
-  const routeUnlocked = solvedStations.includes(routeUnlockStationId);
-  if (!routeUnlocked) {
-    elements.routeRiddlesList.textContent = '先解出本组首个地点，再解这段路上的小谜题。';
+  const routePhaseEnded = solvedStations.includes(routeUnlockStationId);
+  if (routePhaseEnded) {
+    elements.routeRiddlesList.textContent = '已进入地点谜题阶段，当前无路线小任务。';
     return;
   }
 
   if (!routeRiddles.length) {
-    elements.routeRiddlesList.textContent = '该组路线谜题暂未配置，请联系裁判。';
+    elements.routeRiddlesList.textContent = '该组起点到首点的小任务暂未配置，请联系裁判。';
     return;
   }
 
@@ -420,6 +454,7 @@ function renderActiveTeamState() {
       const formatHint = String(riddle.formatHint || '').trim();
       const points = Number(riddle.points || 0);
       const questionImageUrl = String(riddle.questionImageUrl || '').trim();
+      const answerDraft = escapeHtml(getAnswerDraft(activeTeam.id, 'route', riddle.id));
       const metaText = [formatHint ? `作答格式：${formatHint}` : '', `分值：${points} 分`]
         .filter(Boolean)
         .join(' | ');
@@ -434,7 +469,7 @@ function renderActiveTeamState() {
             ${questionImageUrl ? `<img class="route-question-image" src="${encodeURI(questionImageUrl)}" alt="路线题配图" loading="lazy" />` : ''}
             <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
             <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
-              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
               <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
             </form>
           </div>
@@ -508,7 +543,8 @@ elements.routeRiddlesList.addEventListener('click', (event) => {
   }
 });
 
-async function refreshAll() {
+async function refreshAll(options = {}) {
+  const skipRenderWhileTyping = options.skipRenderWhileTyping === true;
   const [teams, stations, settings] = await Promise.all([
     request('/api/teams'),
     request('/api/stations'),
@@ -520,6 +556,10 @@ async function refreshAll() {
   state.teamSwitchEnabled = settings?.teamSwitchEnabled !== false;
   if (!state.activeTeamId) {
     state.activeTeamId = getSavedActiveTeamId();
+  }
+
+  if (skipRenderWhileTyping && isTypingInAnswerInput()) {
+    return;
   }
 
   fillTeamSelects(teams);
@@ -625,7 +665,11 @@ async function submitRiddleAnswer(answerType, itemId, answerText) {
     : result.message;
 
   setResult(message, status, result.correct ? (result.clueImageUrl || '') : '');
+  if (result.correct) {
+    clearAnswerDraft(activeTeam.id, answerType, itemId);
+  }
   await refreshAll();
+  return result;
 }
 
 async function buyStationHint(stationId) {
@@ -681,10 +725,40 @@ elements.routeRiddlesList.addEventListener('submit', async (event) => {
   }
 });
 
+elements.bigRiddlesList.addEventListener('input', (event) => {
+  const input = event.target.closest('.riddle-answer-input');
+  if (!input) {
+    return;
+  }
+
+  const form = input.closest('.riddle-answer-form');
+  const activeTeam = getActiveTeam();
+  if (!form || !activeTeam || !form.dataset.id) {
+    return;
+  }
+
+  setAnswerDraft(activeTeam.id, 'station', form.dataset.id, input.value);
+});
+
+elements.routeRiddlesList.addEventListener('input', (event) => {
+  const input = event.target.closest('.riddle-answer-input');
+  if (!input) {
+    return;
+  }
+
+  const form = input.closest('.riddle-answer-form');
+  const activeTeam = getActiveTeam();
+  if (!form || !activeTeam || !form.dataset.id) {
+    return;
+  }
+
+  setAnswerDraft(activeTeam.id, 'route', form.dataset.id, input.value);
+});
+
 refreshAll()
   .then(() => {
     setInterval(() => {
-      refreshAll().catch(() => {});
+      refreshAll({ skipRenderWhileTyping: true }).catch(() => {});
     }, 5000);
   })
   .catch((error) => {

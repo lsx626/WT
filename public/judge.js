@@ -175,7 +175,11 @@ elements.manualScoreForm.addEventListener('submit', async (event) => {
   try {
     const teamId = elements.manualTeam.value;
     const delta = Number(elements.manualDelta.value);
-    const reason = elements.manualReason.value || '人工调整';
+    const reason = elements.manualReason.value || '地点体育活动加分';
+
+    if (![1, 2, 3, 4].includes(delta)) {
+      throw new Error('仅支持 +1、+2、+3、+4 分。');
+    }
 
     await request(`/api/teams/${teamId}/points`, {
       method: 'PATCH',
@@ -183,7 +187,7 @@ elements.manualScoreForm.addEventListener('submit', async (event) => {
     });
 
     elements.manualReason.value = '';
-    setJudgeResult('调分成功，数据已同步。', 'ok');
+    setJudgeResult('加分成功，数据已同步。', 'ok');
     await refreshJudge();
   } catch (error) {
     setJudgeResult(error.message, 'bad');

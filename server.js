@@ -162,6 +162,12 @@ function sanitizeSubmissionRecord(submission) {
 app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/api', (_, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 
 async function fileExists(filePath) {
   try {
@@ -655,15 +661,19 @@ app.get('/api/teams', async (_, res) => {
         releasedStationCode: releasedStation?.code || '',
         releasedStationId: releasedStation?.id || '',
         routeRiddles: (() => {
-          return routeQuestions.map((item, itemIndex) => ({
-            id: item.id,
-            order: itemIndex + 1,
-            code: `${routeLetter}${itemIndex + 1}`,
-            question: item.question,
-            questionImageUrl: item.questionImageUrl || '',
-            formatHint: item.formatHint || '',
-            points: Number(item.points || 0)
-          }));
+          if (!firstQuestion) {
+            return [];
+          }
+
+          return [{
+            id: firstQuestion.id,
+            order: 1,
+            code: `${routeLetter}1`,
+            question: firstQuestion.question,
+            questionImageUrl: firstQuestion.questionImageUrl || '',
+            formatHint: firstQuestion.formatHint || '',
+            points: Number(firstQuestion.points || 0)
+          }];
         })(),
         firstRiddle: (() => {
           if (!firstQuestion) {
@@ -720,11 +730,12 @@ app.post(
 
 app.patch('/api/teams/:teamId/points', requireJudgeAuth, asyncHandler(async (req, res) => {
   const { teamId } = req.params;
-  const { delta, reason = '人工调整' } = req.body || {};
+  const { delta, reason = '地点体育活动加分' } = req.body || {};
   const parsedDelta = Number(delta);
+  const allowedDeltas = new Set([1, 2, 3, 4]);
 
-  if (!isValidHalfStepNumber(parsedDelta)) {
-    throw new HttpError(400, 'delta 必须是 0.5 的倍数。');
+  if (!allowedDeltas.has(parsedDelta)) {
+    throw new HttpError(400, '裁判加分仅允许 +1、+2、+3、+4。');
   }
 
   const team = await mutateDb((db) => {
@@ -739,7 +750,7 @@ app.patch('/api/teams/:teamId/points', requireJudgeAuth, asyncHandler(async (req
       teamId,
       stationId: null,
       answer: null,
-      result: 'manual',
+      result: 'judge-points',
       delta: parsedDelta,
       reason: String(reason),
       at: new Date().toISOString()
@@ -929,14 +940,14 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     if (routeQuestionId) {
       const routeKey = getRouteKeyByTeamNumber(db.routeQuestions, team.number);
       const routeQuestions = routeKey ? (db.routeQuestions?.[routeKey] || []) : [];
-      const routeQuestion = routeQuestions.find((item) => item.id === routeQuestionId);
-      if (!routeQuestion) {
-        throw new HttpError(404, '路线小谜题不存在。');
+      const routeQuestion = routeQuestions[0] || null;
+      const firstStationId = getTeamStationIdSequence(db.stations, team.number)[0]?.id || 's1';
+      if (!routeQuestion || routeQuestion.id !== routeQuestionId) {
+        throw new HttpError(404, '该阶段仅开放起点到首个地点的路线小谜题。');
       }
 
-      const routeUnlockStationId = getTeamStationIdSequence(db.stations, team.number)[0]?.id || 's1';
-      if (!team.solvedStations.includes(routeUnlockStationId)) {
-        throw new HttpError(400, '请先解出本组首个地点，再作答路线小谜题。');
+      if (team.solvedStations.includes(firstStationId)) {
+        throw new HttpError(400, '已到达首个地点，路线小任务阶段已结束。');
       }
 
       if (team.solvedRouteQuestions.includes(routeQuestionId)) {
@@ -1015,7 +1026,7 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
       stationId,
       answer: String(answer || ''),
       result: isCorrect ? 'correct' : 'wrong',
-      delta: isCorrect ? station.points : 0,
+      delta: 0,
       at: new Date().toISOString()
     });
 
@@ -1027,7 +1038,6 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     }
 
     team.solvedStations.push(stationId);
-    team.points = roundScore(team.points + Number(station.points || 0));
     team.clues.push({
       stationId,
       clue: resolvedClue,
@@ -1041,8 +1051,8 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
       clue: resolvedClue,
       clueImageUrl: resolvedClueImageUrl || null,
       points: team.points,
-      gained: station.points,
-      message: station.points > 0 ? `回答正确，+${station.points} 分！` : '谜题验证通过，请前往对应点位完成挑战。'
+      gained: 0,
+      message: '谜题验证通过。地点体育活动加分由裁判手动记录，并由裁判放行下一地点。'
     };
   });
 
