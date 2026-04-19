@@ -661,19 +661,15 @@ app.get('/api/teams', async (_, res) => {
         releasedStationCode: releasedStation?.code || '',
         releasedStationId: releasedStation?.id || '',
         routeRiddles: (() => {
-          if (!firstQuestion) {
-            return [];
-          }
-
-          return [{
-            id: firstQuestion.id,
-            order: 1,
-            code: `${routeLetter}1`,
-            question: firstQuestion.question,
-            questionImageUrl: firstQuestion.questionImageUrl || '',
-            formatHint: firstQuestion.formatHint || '',
-            points: Number(firstQuestion.points || 0)
-          }];
+          return routeQuestions.map((item, itemIndex) => ({
+            id: item.id,
+            order: itemIndex + 1,
+            code: `${routeLetter}${itemIndex + 1}`,
+            question: item.question,
+            questionImageUrl: item.questionImageUrl || '',
+            formatHint: item.formatHint || '',
+            points: Number(item.points || 0)
+          }));
         })(),
         firstRiddle: (() => {
           if (!firstQuestion) {
@@ -764,6 +760,11 @@ app.patch('/api/teams/:teamId/points', requireJudgeAuth, asyncHandler(async (req
 
 app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async (req, res) => {
   const { teamId } = req.params;
+  const rawPoints = Number(req.body?.activityPoints);
+  if (![1, 2, 3, 4].includes(rawPoints)) {
+    throw new HttpError(400, 'activityPoints 仅允许 1、2、3、4。');
+  }
+
   const payload = await mutateDb((db) => {
     const team = db.teams.find((item) => item.id === teamId);
     if (!team) {
@@ -773,10 +774,25 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
 
     const stationSequence = getTeamStationIdSequence(db.stations, team.number);
     const maxOrder = Math.max(1, stationSequence.length || 1);
+    const addedPoints = rawPoints;
+    team.points = Math.max(0, roundScore(team.points + addedPoints));
 
     if (team.releasedStationOrder >= maxOrder) {
       const releasedStation = stationSequence[Math.max(0, maxOrder - 1)] || null;
+      db.submissions.push({
+        id: nanoid(10),
+        teamId,
+        stationId: null,
+        answer: null,
+        result: 'judge-points',
+        delta: addedPoints,
+        reason: '地点体育活动加分（末站）',
+        at: new Date().toISOString()
+      });
+
       return {
+        points: team.points,
+        addedPoints,
         releasedStationOrder: team.releasedStationOrder,
         releasedStationCode: releasedStation?.code || '',
         releasedStationId: releasedStation?.id || '',
@@ -792,12 +808,14 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
       stationId: null,
       answer: null,
       result: 'release-next',
-      delta: 0,
+      delta: addedPoints,
       reason: `裁判放行 ${releasedStation?.code || `${team.releasedStationOrder}号地点`}`,
       at: new Date().toISOString()
     });
 
     return {
+      points: team.points,
+      addedPoints,
       releasedStationOrder: team.releasedStationOrder,
       releasedStationCode: releasedStation?.code || '',
       releasedStationId: releasedStation?.id || '',
@@ -940,14 +958,9 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     if (routeQuestionId) {
       const routeKey = getRouteKeyByTeamNumber(db.routeQuestions, team.number);
       const routeQuestions = routeKey ? (db.routeQuestions?.[routeKey] || []) : [];
-      const routeQuestion = routeQuestions[0] || null;
-      const firstStationId = getTeamStationIdSequence(db.stations, team.number)[0]?.id || 's1';
-      if (!routeQuestion || routeQuestion.id !== routeQuestionId) {
-        throw new HttpError(404, '该阶段仅开放起点到首个地点的路线小谜题。');
-      }
-
-      if (team.solvedStations.includes(firstStationId)) {
-        throw new HttpError(400, '已到达首个地点，路线小任务阶段已结束。');
+      const routeQuestion = routeQuestions.find((item) => item.id === routeQuestionId) || null;
+      if (!routeQuestion) {
+        throw new HttpError(404, '路线小谜题不存在。');
       }
 
       if (team.solvedRouteQuestions.includes(routeQuestionId)) {

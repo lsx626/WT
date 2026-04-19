@@ -4,14 +4,10 @@ const elements = {
   judgePassword: document.querySelector('#judge-password'),
   judgeLoginResult: document.querySelector('#judge-login-result'),
   judgeLogoutBtn: document.querySelector('#judge-logout-btn'),
-  manualScoreForm: document.querySelector('#manual-score-form'),
-  manualScoreCard: document.querySelector('#manual-score-card'),
-  manualTeam: document.querySelector('#manual-team'),
-  manualDelta: document.querySelector('#manual-delta'),
-  manualReason: document.querySelector('#manual-reason'),
-  judgeResult: document.querySelector('#judge-result'),
+  releaseControlCard: document.querySelector('#release-control-card'),
   releaseNextForm: document.querySelector('#release-next-form'),
   releaseTeam: document.querySelector('#release-team'),
+  releasePoints: document.querySelector('#release-points'),
   releaseResult: document.querySelector('#release-result'),
   teamSwitchSettingForm: document.querySelector('#team-switch-setting-form'),
   teamSwitchSettingBtn: document.querySelector('#team-switch-setting-btn'),
@@ -47,14 +43,6 @@ function getTeamLabel(team, fallbackNumber = 0) {
     return `第${team.number}组`;
   }
   return `第${fallbackNumber || 0}组`;
-}
-
-function setJudgeResult(message, resultState) {
-  elements.judgeResult.textContent = message;
-  elements.judgeResult.classList.remove('ok', 'bad');
-  if (resultState) {
-    elements.judgeResult.classList.add(resultState);
-  }
 }
 
 function setJudgeLoginResult(message, resultState) {
@@ -97,7 +85,7 @@ function renderTeamSwitchSetting() {
 
 function setJudgeAuthed(authed) {
   elements.judgeLoginCard.hidden = authed;
-  elements.manualScoreCard.hidden = !authed;
+  elements.releaseControlCard.hidden = !authed;
   elements.teamStatusCard.hidden = !authed;
 }
 
@@ -106,7 +94,6 @@ function fillTeamSelect(teams) {
     .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}（${team.points} 分）</option>`)
     .join('');
 
-  elements.manualTeam.innerHTML = html || '<option value="">暂无小组</option>';
   elements.releaseTeam.innerHTML = html || '<option value="">暂无小组</option>';
 }
 
@@ -169,44 +156,25 @@ elements.judgeLogoutBtn.addEventListener('click', async () => {
   setJudgeLoginResult('已退出裁判端。', 'ok');
 });
 
-elements.manualScoreForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  try {
-    const teamId = elements.manualTeam.value;
-    const delta = Number(elements.manualDelta.value);
-    const reason = elements.manualReason.value || '地点体育活动加分';
-
-    if (![1, 2, 3, 4].includes(delta)) {
-      throw new Error('仅支持 +1、+2、+3、+4 分。');
-    }
-
-    await request(`/api/teams/${teamId}/points`, {
-      method: 'PATCH',
-      body: JSON.stringify({ delta, reason })
-    });
-
-    elements.manualReason.value = '';
-    setJudgeResult('加分成功，数据已同步。', 'ok');
-    await refreshJudge();
-  } catch (error) {
-    setJudgeResult(error.message, 'bad');
-  }
-});
-
 elements.releaseNextForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   try {
     const teamId = elements.releaseTeam.value;
+    const points = Number(elements.releasePoints.value);
+    if (![1, 2, 3, 4].includes(points)) {
+      throw new Error('仅支持 +1、+2、+3、+4 分。');
+    }
+
     const result = await request(`/api/teams/${teamId}/release-next`, {
-      method: 'POST'
+      method: 'POST',
+      body: JSON.stringify({ activityPoints: points })
     });
 
     if (result.isMax) {
-      setReleaseResult('该组已放行到最后一个地点。', 'ok');
+      setReleaseResult(`该组已是最后一个地点，本次仅记录 +${result.addedPoints || points} 分。`, 'ok');
     } else {
-      setReleaseResult(`放行成功，当前已放行到 ${result.releasedStationCode || '-'} 点。`, 'ok');
+      setReleaseResult(`已记录 +${result.addedPoints || points} 分，并放行到 ${result.releasedStationCode || '-'} 点。`, 'ok');
     }
     await refreshJudge();
   } catch (error) {

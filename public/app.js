@@ -434,8 +434,6 @@ function renderActiveTeamState() {
   }
 
   const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
-  const routeUnlockStationId = activeTeam.routeUnlockStationId || stationSequence[0]?.id || 's1';
-  const routePhaseEnded = solvedStations.includes(routeUnlockStationId);
   if (!routeRiddles.length) {
     elements.routeRiddlesList.textContent = '该组起点到首点的小任务暂未配置，请联系裁判。';
     return;
@@ -444,7 +442,6 @@ function renderActiveTeamState() {
   elements.routeRiddlesList.innerHTML = routeRiddles
     .map((riddle) => {
       const solved = solvedRouteQuestions.includes(riddle.id);
-      const stageLocked = routePhaseEnded && !solved;
       const expanded = solved && isSolvedItemExpanded('route', riddle.id);
       const compactSolved = solved && !expanded;
       const formatHint = String(riddle.formatHint || '').trim();
@@ -453,8 +450,7 @@ function renderActiveTeamState() {
       const answerDraft = escapeHtml(getAnswerDraft(activeTeam.id, 'route', riddle.id));
       const metaText = [
         formatHint ? `作答格式：${formatHint}` : '',
-        `分值：${points} 分`,
-        stageLocked ? '该路线小任务阶段已结束（保留展示）' : ''
+        `分值：${points} 分`
       ]
         .filter(Boolean)
         .join(' | ');
@@ -469,8 +465,8 @@ function renderActiveTeamState() {
             ${questionImageUrl ? `<img class="route-question-image" src="${encodeURI(questionImageUrl)}" alt="路线题配图" loading="lazy" />` : ''}
             <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
             <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
-              <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${solved || stageLocked ? 'disabled' : ''} required />
-              <button type="submit" ${solved || stageLocked ? 'disabled' : ''}>${solved ? '已锁定' : (stageLocked ? '阶段已结束' : '提交答案')}</button>
+              <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
             </form>
           </div>
         </article>
