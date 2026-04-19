@@ -416,48 +416,57 @@ h1 {
 }
 
 .active-team {
-  display: block;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
   max-width: 100%;
   padding: 0;
   font-weight: 700;
-  font-size: clamp(18px, 2vw, 22px);
+  font-size: clamp(20px, 2vw, 24px);
   line-height: 1.25;
   color: #173a64;
   overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 #active-team-card {
-  grid-column: span 3;
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  padding-top: 16px;
-  padding-bottom: 16px;
+  grid-column: span 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  min-height: 72px;
 }
 
 #active-team-card h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 12px;
   color: var(--ink-sub);
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 #team-switch-toggle {
-  margin-top: 2px;
-  margin-left: 0;
+  margin-top: 0;
+  margin-left: auto;
   justify-self: start;
 }
 
 #team-switch-form {
-  margin-top: 8px;
+  margin-top: 0;
+  width: 100%;
   flex-basis: 100%;
 }
 
 #team-switch-result {
-  margin-top: 8px;
+  margin-top: 0;
   min-height: 40px;
   flex-basis: 100%;
+  width: 100%;
 }
 
 form {
@@ -632,13 +641,12 @@ label {
 
   #active-team-card {
     grid-column: span 6;
-    display: block;
-    padding-top: 14px;
-    padding-bottom: 14px;
+    min-height: 64px;
+    padding: 10px 14px;
   }
 
   #active-team-card h2 {
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
 
   .setup-grid {
@@ -700,18 +708,18 @@ label {
   }
 
   #active-team-card {
-    gap: 6px;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    min-height: 60px;
   }
 
   #active-team-card h2 {
-    margin-bottom: 2px;
+    margin-bottom: 0;
     font-size: 13px;
   }
 
   .active-team {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .riddle-box {

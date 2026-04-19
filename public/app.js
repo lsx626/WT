@@ -24,7 +24,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_7';
+const APP_DATA_VERSION = '20260419_9';
 
 function clearStaleClientState() {
   try {
@@ -526,12 +526,7 @@ function clearActiveTeam() {
 
 function fillTeamSelects(teams) {
   const html = teams
-    .map((team, index) => {
-      const memberCount = getTeamMemberCount(team);
-      const full = memberCount >= 4;
-      const fullTag = full ? '（该组人数已满）' : `（${memberCount}/4 人）`;
-      return `<option value="${team.id}" ${full ? 'disabled' : ''}>${getTeamLabel(team, index + 1)}${fullTag}（${team.points} 分）</option>`;
-    })
+    .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}</option>`)
     .join('');
 
   elements.setupExistingTeam.innerHTML = html || '<option value="">暂无组别，请联系裁判</option>';
