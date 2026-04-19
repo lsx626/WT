@@ -23,7 +23,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_4';
+const APP_DATA_VERSION = '20260419_5';
 
 function clearStaleClientState() {
   try {
@@ -269,7 +269,8 @@ function renderClueHistory(activeTeam, stations) {
     .map((item, index) => {
       const station = item.stationId ? stationMap.get(item.stationId) : null;
       const route = item.routeQuestionId ? routeMap.get(item.routeQuestionId) : null;
-      const title = station?.title
+      const stationTitle = String(station?.title || '').replace(/（[^）]*->[\s\S]*?）/g, '').trim();
+      const title = stationTitle
         || (route ? `路线小谜题 ${route.code || route.id}` : '')
         || item.stationId
         || item.routeQuestionId
@@ -905,11 +906,9 @@ async function submitRiddleAnswer(answerType, itemId, answerText) {
   });
 
   const status = result.correct ? 'ok' : 'bad';
-  const message = result.correct
-    ? `${result.message} 当前总分 ${result.points}。${result.clue ? `\n线索：${result.clue}` : ''}`
-    : result.message;
+  const message = result.message;
 
-  setResult(message, status, result.correct ? (result.clueImageUrl || '') : '');
+  setResult(message, status, '');
   if (result.correct) {
     clearAnswerDraft(activeTeam.id, answerType, itemId);
     await refreshAll();
