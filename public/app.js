@@ -25,7 +25,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_14';
+const APP_DATA_VERSION = '20260419_15';
 
 function clearStaleClientState() {
   try {
@@ -1135,31 +1135,12 @@ elements.finalAnswerInput?.addEventListener('input', (event) => {
   setAnswerDraft(activeTeam.id, 'final', 'destination', input.value);
 });
 
-elements.finalHintBtn?.addEventListener('click', () => {
-  const activeTeam = getActiveTeam();
-  if (!activeTeam) {
-    setResult('请先选择组别。', 'bad');
-    return;
+elements.finalHintBtn?.addEventListener('click', async () => {
+  try {
+    await buyStationHint('s5');
+  } catch (error) {
+    setResult(error.message, 'bad');
   }
-
-  const finalClues = (Array.isArray(activeTeam.clues) ? activeTeam.clues : [])
-    .filter((item) => {
-      const text = String(item?.clue || '').trim();
-      const image = String(item?.clueImageUrl || '').trim();
-      return image.includes('final-clue.png') || /终极线索|终点线索/.test(text);
-    });
-
-  if (!finalClues.length) {
-    setResult('终点提示暂未解锁，请先完成并由裁判放行至最后地点。', 'bad');
-    return;
-  }
-
-  const textList = finalClues
-    .map((item) => String(item?.clue || '').trim())
-    .filter(Boolean);
-  const clueImageUrl = String(finalClues.find((item) => String(item?.clueImageUrl || '').trim())?.clueImageUrl || '').trim();
-  const hintText = textList.length ? textList.join('\n') : '终点线索已解锁。';
-  setResult(`提示：${hintText}`, 'ok', clueImageUrl);
 });
 
 refreshAll()
