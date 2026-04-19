@@ -1173,10 +1173,8 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
   return res.status(200).json(result);
 }));
 
-app.post('/api/final-answer', asyncHandler(async (req, res) => {
-  const { teamId, answer } = req.body || {};
-
-  const result = await mutateDb((db) => {
+async function handleFinalAnswerSubmission(teamId, answer) {
+  return mutateDb((db) => {
     const team = db.teams.find((item) => item.id === teamId);
     if (!team) {
       throw new HttpError(404, '队伍不存在。');
@@ -1217,7 +1215,17 @@ app.post('/api/final-answer', asyncHandler(async (req, res) => {
       message: '终点答案验证通过，请前往终点打卡。'
     };
   });
+}
 
+app.post('/api/final-answer', asyncHandler(async (req, res) => {
+  const { teamId, answer } = req.body || {};
+  const result = await handleFinalAnswerSubmission(teamId, answer);
+  return res.status(200).json(result);
+}));
+
+app.post('/api/teams/:teamId/final-answer', asyncHandler(async (req, res) => {
+  const { teamId } = req.params;
+  const result = await handleFinalAnswerSubmission(teamId, req.body?.answer);
   return res.status(200).json(result);
 }));
 
