@@ -56,6 +56,7 @@ const state = {
   teams: [],
   stations: [],
   nonogramDrafts: {},
+  nonogramInteractingUntil: 0,
   answerDrafts: {},
   teamSwitchEnabled: true,
   expandedSolvedItems: new Set()
@@ -84,6 +85,14 @@ function clearAnswerDraft(teamId, type, itemId) {
 function isTypingInAnswerInput() {
   const active = document.activeElement;
   return Boolean(active && active.classList && active.classList.contains('riddle-answer-input'));
+}
+
+function markNonogramInteracting() {
+  state.nonogramInteractingUntil = Date.now() + 2000;
+}
+
+function isNonogramInteracting() {
+  return Date.now() < Number(state.nonogramInteractingUntil || 0);
 }
 
 function getSolvedItemKey(kind, id) {
@@ -170,6 +179,24 @@ function setResult(message, resultState, clueImageUrl = '') {
 
   elements.answerClueImage.hidden = false;
   elements.answerClueImage.innerHTML = `<img src="${encodeURI(clueImageUrl)}" alt="终点线索截图" loading="lazy" />`;
+}
+
+function setAnswerInputError(input, show, message = '答案错误') {
+  if (!input) {
+    return;
+  }
+
+  const wrap = input.closest('.answer-input-wrap');
+  const hint = wrap ? wrap.querySelector('.answer-error-msg') : null;
+  input.classList.toggle('input-error', Boolean(show));
+
+  if (!hint) {
+    return;
+  }
+
+  hint.textContent = message;
+  hint.hidden = !show;
+  wrap.classList.toggle('show-error', Boolean(show));
 }
 
 function renderClueHistory(activeTeam, stations) {
@@ -466,7 +493,8 @@ function renderActiveTeamState() {
         const purchasedHints = Array.isArray(activeTeam.purchasedHints?.[station.id])
           ? activeTeam.purchasedHints[station.id]
           : [];
-        const answerDraft = escapeHtml(getAnswerDraft(activeTeam.id, 'station', station.id));
+        const solvedAnswer = String(activeTeam.solvedStationAnswers?.[station.id] || '').trim();
+        const inputValue = escapeHtml(solved ? solvedAnswer : getAnswerDraft(activeTeam.id, 'station', station.id));
         const boughtCount = purchasedHints.length;
         const hintCount = Number(station.hintCount || 0);
         const leftHints = Math.max(0, hintCount - boughtCount);
@@ -489,7 +517,10 @@ function renderActiveTeamState() {
               <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
               ${purchasedHintsHtml}
               <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
-                <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
+                <div class="answer-input-wrap">
+                  <p class="answer-error-msg" hidden>答案错误</p>
+                  <input class="riddle-answer-input" name="answer" value="${inputValue}" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
+                </div>
                 <div class="riddle-actions">
                   <button type="submit" ${disabled ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
                   <button
@@ -522,7 +553,8 @@ function renderActiveTeamState() {
       const formatHint = String(riddle.formatHint || '').trim();
       const points = Number(riddle.points || 0);
       const questionImageUrl = String(riddle.questionImageUrl || '').trim();
-      const answerDraft = escapeHtml(getAnswerDraft(activeTeam.id, 'route', riddle.id));
+      const solvedAnswer = String(activeTeam.solvedRouteAnswers?.[riddle.id] || '').trim();
+      const inputValue = escapeHtml(solved ? solvedAnswer : getAnswerDraft(activeTeam.id, 'route', riddle.id));
       const metaText = [
         formatHint ? `作答格式：${formatHint}` : '',
         `分值：${points} 分`
@@ -540,7 +572,10 @@ function renderActiveTeamState() {
             ${questionImageUrl ? `<img class="route-question-image" src="${encodeURI(questionImageUrl)}" alt="路线题配图" loading="lazy" />` : ''}
             <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
             <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
-              <input class="riddle-answer-input" name="answer" value="${answerDraft}" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              <div class="answer-input-wrap">
+                <p class="answer-error-msg" hidden>答案错误</p>
+                <input class="riddle-answer-input" name="answer" value="${inputValue}" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              </div>
               <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
             </form>
           </div>
@@ -593,6 +628,8 @@ elements.bigRiddlesList.addEventListener('click', (event) => {
     return;
   }
 
+  markNonogramInteracting();
+
   const draft = getNonogramDraft(activeTeam.id, station);
   const nextValue = Number(draft[row]?.[col] || 0) ? 0 : 1;
   draft[row][col] = nextValue;
@@ -629,7 +666,7 @@ async function refreshAll(options = {}) {
     state.activeTeamId = getSavedActiveTeamId();
   }
 
-  if (skipRenderWhileTyping && isTypingInAnswerInput()) {
+  if (skipRenderWhileTyping && (isTypingInAnswerInput() || isNonogramInteracting())) {
     return;
   }
 
@@ -740,8 +777,8 @@ async function submitRiddleAnswer(answerType, itemId, answerText) {
   setResult(message, status, result.correct ? (result.clueImageUrl || '') : '');
   if (result.correct) {
     clearAnswerDraft(activeTeam.id, answerType, itemId);
+    await refreshAll();
   }
-  await refreshAll();
   return result;
 }
 
@@ -771,7 +808,11 @@ elements.bigRiddlesList.addEventListener('submit', async (event) => {
       throw new Error('请输入答案后再提交。');
     }
 
-    await submitRiddleAnswer('station', form.dataset.id, answerText);
+    setAnswerInputError(answerInput, false);
+    const result = await submitRiddleAnswer('station', form.dataset.id, answerText);
+    if (!result.correct) {
+      setAnswerInputError(answerInput, true, '答案错误');
+    }
   } catch (error) {
     setResult(error.message, 'bad');
   }
@@ -792,7 +833,11 @@ elements.routeRiddlesList.addEventListener('submit', async (event) => {
       throw new Error('请输入答案后再提交。');
     }
 
-    await submitRiddleAnswer('route', form.dataset.id, answerText);
+    setAnswerInputError(answerInput, false);
+    const result = await submitRiddleAnswer('route', form.dataset.id, answerText);
+    if (!result.correct) {
+      setAnswerInputError(answerInput, true, '答案错误');
+    }
   } catch (error) {
     setResult(error.message, 'bad');
   }
@@ -810,6 +855,8 @@ elements.bigRiddlesList.addEventListener('input', (event) => {
     return;
   }
 
+  setAnswerInputError(input, false);
+
   setAnswerDraft(activeTeam.id, 'station', form.dataset.id, input.value);
 });
 
@@ -824,6 +871,8 @@ elements.routeRiddlesList.addEventListener('input', (event) => {
   if (!form || !activeTeam || !form.dataset.id) {
     return;
   }
+
+  setAnswerInputError(input, false);
 
   setAnswerDraft(activeTeam.id, 'route', form.dataset.id, input.value);
 });

@@ -28,7 +28,7 @@ const STATION_CODE_TO_ID = {
   X: 's5'
 };
 const FINAL_POEM_CLUES = [
-  '谁家庭院落残红，\n红雨三千湿缃缥。\n缃缥难招长恨魄，\n魄归碧落路迢迢。',
+  '谁家庭院落残红，\n红雨三千湿缃缥。\n缥缈难招长恨魄，\n魄归碧落路迢迢。',
   '迢迢云海化烟灰，\n灰冷难回望帝心。\n心事终随马嵬血，\n血污泥埋旧铃音。',
   '音沉独对海棠残，\n棠棣难寻连理枝。\n枝冷孤灯人不寐，\n寐中唯见月如钩。'
 ];
@@ -635,6 +635,37 @@ app.post('/api/team-switch/unlock', (req, res) => {
 
 app.get('/api/teams', async (_, res) => {
   const db = await readDb();
+  const solvedAnswerMapByTeam = new Map();
+
+  for (const submission of db.submissions || []) {
+    const teamId = String(submission?.teamId || '').trim();
+    if (!teamId) {
+      continue;
+    }
+
+    let bag = solvedAnswerMapByTeam.get(teamId);
+    if (!bag) {
+      bag = { stations: {}, routes: {} };
+      solvedAnswerMapByTeam.set(teamId, bag);
+    }
+
+    if (submission?.result === 'correct' && submission?.stationId) {
+      const stationId = String(submission.stationId || '').trim();
+      const answer = String(submission.answer || '').trim();
+      if (stationId && answer) {
+        bag.stations[stationId] = answer;
+      }
+    }
+
+    if (submission?.result === 'route-correct' && submission?.routeQuestionId) {
+      const routeQuestionId = String(submission.routeQuestionId || '').trim();
+      const answer = String(submission.answer || '').trim();
+      if (routeQuestionId && answer) {
+        bag.routes[routeQuestionId] = answer;
+      }
+    }
+  }
+
   res.json(
     db.teams.map((team, index) => {
       const normalizedNumber = Number.isInteger(team.number) ? team.number : index + 1;
@@ -660,6 +691,7 @@ app.get('/api/teams', async (_, res) => {
           acc[stationId] = hints.slice(0, boughtCount);
           return acc;
         }, {});
+      const solvedAnswerBag = solvedAnswerMapByTeam.get(team.id) || { stations: {}, routes: {} };
 
       return {
         ...team,
@@ -668,6 +700,8 @@ app.get('/api/teams', async (_, res) => {
         solvedRouteQuestions: Array.isArray(team.solvedRouteQuestions) ? team.solvedRouteQuestions : [],
         solvedStations: Array.isArray(team.solvedStations) ? team.solvedStations : [],
         clues: Array.isArray(team.clues) ? team.clues : [],
+        solvedStationAnswers: solvedAnswerBag.stations,
+        solvedRouteAnswers: solvedAnswerBag.routes,
         boughtHints: team.boughtHints && typeof team.boughtHints === 'object' ? team.boughtHints : {},
         purchasedHints,
         releasedStationOrder: Number.isInteger(team.releasedStationOrder) && team.releasedStationOrder > 0
