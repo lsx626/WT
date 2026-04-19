@@ -33,6 +33,15 @@
       <section class="card" id="active-team-card">
         <h2>当前积分</h2>
         <div id="active-team-display" class="active-team">尚未设置组别</div>
+        <button id="team-switch-toggle" class="secondary-btn" type="button" hidden>组别选错了？</button>
+        <form id="team-switch-form" hidden>
+          <label>
+            输入裁判重选码
+            <input id="team-switch-code" placeholder="例如：A1B2C3" autocomplete="off" />
+          </label>
+          <button type="submit">验证并重新选组</button>
+        </form>
+        <div id="team-switch-result" class="result" hidden></div>
       </section>
 
       <section class="card" id="answer-card">
@@ -46,24 +55,13 @@
           <div id="route-riddles-list" class="route-riddles-list">请先选择组别后查看整条路线谜题。</div>
         </div>
         <div id="answer-result" class="result"></div>
-      </section>
-
-      <section class="card" id="buy-hint-card">
-        <h2>购买谜题线索</h2>
-        <form id="buy-hint-form">
-          <label>
-            选择谜题
-            <select id="hint-station" required></select>
-          </label>
-          <button type="submit">花 1 分购买下一条线索</button>
-        </form>
-        <div id="hint-result" class="result"></div>
+        <div id="answer-clue-image" class="clue-image" hidden></div>
       </section>
 
       <section class="card wide" id="rules-card">
         <h2>活动规则（按你提供流程）</h2>
         <div class="rules">
-          <p>1. 每组初始 3 分，先在起点领取谜题并在网站提交验证。</p>
+          <p>1. 每组最多 4 人，初始 3 分，先在起点领取谜题并在网站提交验证。</p>
           <p>2. 每完成一个路线小题可加 0.5 分，可由裁判在调分区录入。</p>
           <p>3. 每处点位挑战按表现记分，建议使用调分区录入 4/3/2/1 分。</p>
           <p>4. 每题可花 1 分购买线索，支持多次购买直到分数不足或线索买完。</p>

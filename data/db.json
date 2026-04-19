@@ -3,7 +3,7 @@
     {
       "id": "team-1",
       "number": 1,
-      "name": "1号组",
+      "name": "第1组",
       "members": [],
       "points": 3,
       "solvedStations": [
@@ -22,7 +22,7 @@
     {
       "id": "team-2",
       "number": 2,
-      "name": "2号组",
+      "name": "第2组",
       "members": [],
       "points": 3,
       "solvedStations": [],
@@ -33,7 +33,7 @@
     {
       "id": "team-3",
       "number": 3,
-      "name": "3号组",
+      "name": "第3组",
       "members": [],
       "points": 3,
       "solvedStations": [],
@@ -44,7 +44,7 @@
     {
       "id": "team-4",
       "number": 4,
-      "name": "4号组",
+      "name": "第4组",
       "members": [],
       "points": 3,
       "solvedStations": [],

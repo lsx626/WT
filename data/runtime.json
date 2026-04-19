@@ -1,32 +1,27 @@
 {
+  "version": 2,
   "teams": [
     {
       "id": "team-1",
       "number": 1,
-      "name": "1号组",
+      "name": "第1组",
       "members": [],
       "points": 3,
-      "solvedStations": [
-        "s1"
-      ],
+      "solvedStations": [],
+      "solvedRouteQuestions": [],
       "releasedStationOrder": 1,
-      "clues": [
-        {
-          "stationId": "s1",
-          "clue": "终点线索 1：留意终点与学校精神口号相关。",
-          "at": "2026-04-18T17:59:34.566Z"
-        }
-      ],
+      "clues": [],
       "boughtHints": {},
       "createdAt": "2026-04-18T00:00:00.000Z"
     },
     {
       "id": "team-2",
       "number": 2,
-      "name": "2号组",
+      "name": "第2组",
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "solvedRouteQuestions": [],
       "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
@@ -35,10 +30,11 @@
     {
       "id": "team-3",
       "number": 3,
-      "name": "3号组",
+      "name": "第3组",
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "solvedRouteQuestions": [],
       "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
@@ -47,61 +43,19 @@
     {
       "id": "team-4",
       "number": 4,
-      "name": "4号组",
+      "name": "第4组",
       "members": [],
       "points": 3,
       "solvedStations": [],
+      "solvedRouteQuestions": [],
       "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
       "createdAt": "2026-04-18T00:00:03.000Z"
     }
   ],
-  "submissions": [
-    {
-      "id": "ja4QTiKDSE",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:51:00.119Z"
-    },
-    {
-      "id": "dlgPyksYgV",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:52:40.234Z"
-    },
-    {
-      "id": "axl4VSZ0IN",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:57:16.532Z"
-    },
-    {
-      "id": "WHwMR9Kzkc",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "wrong",
-      "delta": 0,
-      "at": "2026-04-18T17:59:04.883Z"
-    },
-    {
-      "id": "SYZ0KHtbvg",
-      "teamId": "team-1",
-      "stationId": "s1",
-      "answer": "叶耀珍楼",
-      "result": "correct",
-      "delta": 0,
-      "at": "2026-04-18T17:59:34.566Z"
-    }
-  ]
+  "submissions": [],
+  "settings": {
+    "teamSwitchEnabled": true
+  }
 }

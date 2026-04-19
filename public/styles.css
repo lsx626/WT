@@ -187,6 +187,7 @@ h1 {
 .route-riddles-list {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 .route-riddle-item {
@@ -194,6 +195,7 @@ h1 {
   border-radius: 10px;
   background: #fff;
   padding: 10px;
+  min-width: 0;
 }
 
 .route-riddle-item.riddle-solved {
@@ -218,12 +220,103 @@ h1 {
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--ink-sub);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .riddle-answer-form {
   margin-top: 10px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
+}
+
+.riddle-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.hint-buy-btn {
+  min-height: 44px;
+  width: auto;
+  min-width: 80px;
+  padding: 10px 14px;
+}
+
+.purchased-hints {
+  margin-top: 10px;
+  border: 1px dashed #c3d8ef;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fcfeff 0%, #f2f8ff 100%);
+  padding: 8px 10px;
+}
+
+.purchased-hint-item {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #214d7f;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.nonogram-wrap {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.nonogram-table {
+  border-collapse: collapse;
+  width: max-content;
+}
+
+.nonogram-clue-empty,
+.nonogram-clue-cell,
+.nonogram-cell-box {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #c5d9ef;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 12px;
+  color: #244d7b;
+  background: #f7fbff;
+}
+
+.nonogram-cell-box {
+  padding: 0;
+  background: #fff;
+}
+
+.nonogram-cell {
+  width: 100%;
+  height: 100%;
+  min-height: unset;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.nonogram-cell:hover {
+  transform: none;
+  box-shadow: none;
+  background: #e7f2ff;
+}
+
+.nonogram-cell.filled {
+  background: #1f5fa8;
+}
+
+.nonogram-cell:disabled {
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .riddle-answer-input:disabled {
@@ -251,20 +344,41 @@ h1 {
 }
 
 .active-team {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: auto;
   max-width: 100%;
-  border-radius: 14px;
+  border-radius: 999px;
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, #fbfdff 0%, #f1f7ff 100%);
-  padding: 16px 14px;
+  background: linear-gradient(180deg, #fcfeff 0%, #f3f8ff 100%);
+  padding: 6px 12px;
   font-weight: 700;
-  font-size: clamp(22px, 2.8vw, 30px);
-  letter-spacing: 0.5px;
+  font-size: clamp(14px, 1.8vw, 16px);
+  letter-spacing: 0;
   color: #1a4e88;
   overflow-wrap: anywhere;
+}
+
+#active-team-card {
+  grid-column: span 3;
+}
+
+#active-team-card h2 {
+  margin-bottom: 10px;
+}
+
+#team-switch-toggle {
+  margin-top: 8px;
+}
+
+#team-switch-form {
+  margin-top: 8px;
+}
+
+#team-switch-result {
+  margin-top: 8px;
+  min-height: 40px;
 }
 
 form {
@@ -353,6 +467,9 @@ button:hover {
   padding: 10px;
   font-size: 14px;
   background: linear-gradient(180deg, #fcfeff 0%, #f2f8ff 100%);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .result.ok {
@@ -363,6 +480,22 @@ button:hover {
 .result.bad {
   border-color: color-mix(in srgb, var(--bad) 55%, white 45%);
   background: color-mix(in srgb, var(--bad) 10%, white 90%);
+}
+
+.clue-image {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fcfeff 0%, #f2f8ff 100%);
+  padding: 10px;
+}
+
+.clue-image img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 .stations {
@@ -404,9 +537,21 @@ button:hover {
   overflow-wrap: anywhere;
 }
 
+.riddle-box,
+.riddle-title,
+.setup-note,
+label {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 @media (max-width: 980px) {
   .card,
   .card.wide {
+    grid-column: span 6;
+  }
+
+  #active-team-card {
     grid-column: span 6;
   }
 
@@ -420,6 +565,7 @@ button:hover {
 
   .active-team {
     width: 100%;
+    justify-content: center;
   }
 }
 
