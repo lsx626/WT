@@ -23,8 +23,27 @@ const state = {
   teams: [],
   stations: [],
   nonogramDrafts: {},
-  teamSwitchEnabled: true
+  teamSwitchEnabled: true,
+  expandedSolvedItems: new Set()
 };
+
+function getSolvedItemKey(kind, id) {
+  return `${kind}:${id}`;
+}
+
+function isSolvedItemExpanded(kind, id) {
+  return state.expandedSolvedItems.has(getSolvedItemKey(kind, id));
+}
+
+function toggleSolvedItemExpanded(kind, id) {
+  const key = getSolvedItemKey(kind, id);
+  if (state.expandedSolvedItems.has(key)) {
+    state.expandedSolvedItems.delete(key);
+    return;
+  }
+
+  state.expandedSolvedItems.add(key);
+}
 
 function getCookie(name) {
   const pairs = document.cookie ? document.cookie.split('; ') : [];
@@ -333,6 +352,8 @@ function renderActiveTeamState() {
     elements.bigRiddlesList.innerHTML = visibleBigRiddles
       .map((station) => {
         const solved = solvedStations.includes(station.id);
+        const expanded = solved && isSolvedItemExpanded('station', station.id);
+        const compactSolved = solved && !expanded;
         const disabled = solved;
         const purchasedHints = Array.isArray(activeTeam.purchasedHints?.[station.id])
           ? activeTeam.purchasedHints[station.id]
@@ -348,25 +369,30 @@ function renderActiveTeamState() {
             .join('')}</div>`
           : '';
         return `
-          <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-            <p class="route-riddle-question">${escapeHtml(station.title)}</p>
-            <p class="route-riddle-question">${escapeHtml(station.question)}</p>
-            ${nonogramHtml}
-            <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
-            ${purchasedHintsHtml}
-            <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
-              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
-              <div class="riddle-actions">
-                <button type="submit" ${disabled ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
-                <button
-                  type="button"
-                  class="secondary-btn hint-buy-btn"
-                  data-action="buy-hint"
-                  data-station-id="${station.id}"
-                  ${disabled || leftHints <= 0 ? 'disabled' : ''}
-                >提示</button>
-              </div>
-            </form>
+          <article class="route-riddle-item ${solved ? 'riddle-solved' : ''} ${compactSolved ? 'compact-solved' : ''}">
+            <div class="riddle-item-head">
+              <p class="route-riddle-question">${escapeHtml(station.title)}</p>
+              ${solved ? `<button type="button" class="secondary-btn compact-toggle-btn" data-action="toggle-solved" data-kind="station" data-id="${station.id}" aria-label="${compactSolved ? '展开已完成题目' : '收起已完成题目'}">${compactSolved ? '▾' : '▴'}</button>` : ''}
+            </div>
+            <div class="solved-details">
+              <p class="route-riddle-question">${escapeHtml(station.question)}</p>
+              ${nonogramHtml}
+              <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
+              ${purchasedHintsHtml}
+              <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
+                <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${disabled ? 'disabled' : ''} required />
+                <div class="riddle-actions">
+                  <button type="submit" ${disabled ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
+                  <button
+                    type="button"
+                    class="secondary-btn hint-buy-btn"
+                    data-action="buy-hint"
+                    data-station-id="${station.id}"
+                    ${disabled || leftHints <= 0 ? 'disabled' : ''}
+                  >提示</button>
+                </div>
+              </form>
+            </div>
           </article>
         `;
       })
@@ -389,20 +415,29 @@ function renderActiveTeamState() {
   elements.routeRiddlesList.innerHTML = routeRiddles
     .map((riddle) => {
       const solved = solvedRouteQuestions.includes(riddle.id);
+      const expanded = solved && isSolvedItemExpanded('route', riddle.id);
+      const compactSolved = solved && !expanded;
       const formatHint = String(riddle.formatHint || '').trim();
       const points = Number(riddle.points || 0);
+      const questionImageUrl = String(riddle.questionImageUrl || '').trim();
       const metaText = [formatHint ? `作答格式：${formatHint}` : '', `分值：${points} 分`]
         .filter(Boolean)
         .join(' | ');
 
       return `
-        <article class="route-riddle-item ${solved ? 'riddle-solved' : ''}">
-          <p class="route-riddle-question">${escapeHtml(riddle.question)}</p>
-          <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
-          <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
-            <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
-            <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
-          </form>
+        <article class="route-riddle-item ${solved ? 'riddle-solved' : ''} ${compactSolved ? 'compact-solved' : ''}">
+          <div class="riddle-item-head">
+            <p class="route-riddle-question">${escapeHtml(riddle.question)}</p>
+            ${solved ? `<button type="button" class="secondary-btn compact-toggle-btn" data-action="toggle-solved" data-kind="route" data-id="${riddle.id}" aria-label="${compactSolved ? '展开已完成题目' : '收起已完成题目'}">${compactSolved ? '▾' : '▴'}</button>` : ''}
+          </div>
+          <div class="solved-details">
+            ${questionImageUrl ? `<img class="route-question-image" src="${encodeURI(questionImageUrl)}" alt="路线题配图" loading="lazy" />` : ''}
+            <p class="route-riddle-meta">${escapeHtml(metaText)}${solved ? ' | 已答对并锁定' : ''}</p>
+            <form class="riddle-answer-form" data-type="route" data-id="${riddle.id}">
+              <input class="riddle-answer-input" name="answer" placeholder="请输入答案" ${solved ? 'disabled' : ''} required />
+              <button type="submit" ${solved ? 'disabled' : ''}>${solved ? '已锁定' : '提交答案'}</button>
+            </form>
+          </div>
         </article>
       `;
     })
@@ -410,6 +445,17 @@ function renderActiveTeamState() {
 }
 
 elements.bigRiddlesList.addEventListener('click', (event) => {
+  const toggleButton = event.target.closest('[data-action="toggle-solved"]');
+  if (toggleButton) {
+    const kind = toggleButton.dataset.kind;
+    const id = toggleButton.dataset.id;
+    if (kind && id) {
+      toggleSolvedItemExpanded(kind, id);
+      renderActiveTeamState();
+    }
+    return;
+  }
+
   const hintButton = event.target.closest('[data-action="buy-hint"]');
   if (hintButton) {
     const stationId = hintButton.dataset.stationId;
@@ -446,6 +492,20 @@ elements.bigRiddlesList.addEventListener('click', (event) => {
   draft[row][col] = nextValue;
   setNonogramDraft(activeTeam.id, station, draft);
   cell.classList.toggle('filled', nextValue === 1);
+});
+
+elements.routeRiddlesList.addEventListener('click', (event) => {
+  const toggleButton = event.target.closest('[data-action="toggle-solved"]');
+  if (!toggleButton) {
+    return;
+  }
+
+  const kind = toggleButton.dataset.kind;
+  const id = toggleButton.dataset.id;
+  if (kind && id) {
+    toggleSolvedItemExpanded(kind, id);
+    renderActiveTeamState();
+  }
 });
 
 async function refreshAll() {

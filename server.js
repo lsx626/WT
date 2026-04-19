@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fsSync = require('fs');
 const fs = require('fs/promises');
 const { nanoid } = require('nanoid');
 const crypto = require('crypto');
@@ -39,7 +40,8 @@ const TEAM_POEM_ORDERS = {
   4: [1, 0, 2]
 };
 const FINAL_IMAGE_CLUE_TEXT = '终极线索如下图：';
-const FINAL_IMAGE_CLUE_URL = '/image.png';
+const FINAL_IMAGE_CLUE_URL = '/route-images/final-clue.png';
+const FINAL_IMAGE_CLUE_PATH = path.join(__dirname, 'public', 'route-images', 'final-clue.png');
 const judgeSessions = new Map();
 const teamSwitchTokens = new Map();
 const TEAM_SWITCH_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -457,9 +459,10 @@ function getStationClueForTeam(stations, team, station) {
   }
 
   if (progressIndex === 3) {
+    const hasFinalImageClue = fsSync.existsSync(FINAL_IMAGE_CLUE_PATH);
     return {
-      clue: FINAL_IMAGE_CLUE_TEXT,
-      clueImageUrl: FINAL_IMAGE_CLUE_URL
+      clue: hasFinalImageClue ? FINAL_IMAGE_CLUE_TEXT : '终极线索截图暂未配置，请联系裁判。',
+      clueImageUrl: hasFinalImageClue ? FINAL_IMAGE_CLUE_URL : null
     };
   }
 
@@ -677,6 +680,7 @@ app.get('/api/teams', async (_, res) => {
             order: itemIndex + 1,
             code: `${routeLetter}${itemIndex + 1}`,
             question: item.question,
+            questionImageUrl: item.questionImageUrl || '',
             formatHint: item.formatHint || '',
             points: Number(item.points || 0)
           }));
@@ -692,6 +696,7 @@ app.get('/api/teams', async (_, res) => {
             id: firstQuestion.id,
             code: `${routeLetter}1`,
             question: firstQuestion.question,
+            questionImageUrl: firstQuestion.questionImageUrl || '',
             formatHint: firstQuestion.formatHint || '',
             points: Number(firstQuestion.points || 0)
           };
@@ -1074,10 +1079,6 @@ app.get('/judge', (_, res) => {
 
 app.get('/player', (_, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/image.png', (_, res) => {
-  res.sendFile(path.join(__dirname, 'image.png'));
 });
 
 app.get('*', (_, res) => {

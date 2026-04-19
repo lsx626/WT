@@ -198,6 +198,28 @@ h1 {
   min-width: 0;
 }
 
+.riddle-item-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.compact-toggle-btn {
+  min-height: 26px;
+  min-width: 26px;
+  width: 26px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.compact-solved .solved-details {
+  display: none;
+}
+
 .route-riddle-item.riddle-solved {
   border-color: color-mix(in srgb, var(--ok) 55%, white 45%);
   background: color-mix(in srgb, var(--ok) 12%, white 88%);
@@ -223,6 +245,17 @@ h1 {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.route-question-image {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #c8daee;
+  background: #fff;
 }
 
 .riddle-answer-form {
@@ -344,41 +377,48 @@ h1 {
 }
 
 .active-team {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
+  display: block;
+  width: 100%;
   max-width: 100%;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, #fcfeff 0%, #f3f8ff 100%);
-  padding: 6px 12px;
+  padding: 0;
   font-weight: 700;
-  font-size: clamp(14px, 1.8vw, 16px);
-  letter-spacing: 0;
-  color: #1a4e88;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.25;
+  color: #173a64;
   overflow-wrap: anywhere;
 }
 
 #active-team-card {
   grid-column: span 3;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 
 #active-team-card h2 {
-  margin-bottom: 10px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-sub);
+  font-weight: 600;
 }
 
 #team-switch-toggle {
-  margin-top: 8px;
+  margin-top: 2px;
+  margin-left: 0;
+  justify-self: start;
 }
 
 #team-switch-form {
   margin-top: 8px;
+  flex-basis: 100%;
 }
 
 #team-switch-result {
   margin-top: 8px;
   min-height: 40px;
+  flex-basis: 100%;
 }
 
 form {
@@ -553,6 +593,13 @@ label {
 
   #active-team-card {
     grid-column: span 6;
+    display: block;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  #active-team-card h2 {
+    margin-bottom: 8px;
   }
 
   .setup-grid {
@@ -570,17 +617,23 @@ label {
 }
 
 @media (max-width: 680px) {
-  .layout {
-    width: min(94vw, 560px);
+  .hero {
+    padding: 24px 14px 10px;
   }
 
-  .hero {
-    padding-left: 14px;
-    padding-right: 14px;
+  .subtitle {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .portal-link {
+    margin-top: 8px;
   }
 
   .card {
-    padding: 14px;
+    padding: 14px 13px;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(24, 72, 126, 0.12);
   }
 
   .tag {
@@ -588,7 +641,9 @@ label {
   }
 
   .layout {
-    width: min(100vw - 20px, 560px);
+    width: min(100vw - 14px, 560px);
+    gap: 10px;
+    margin: 14px auto 24px;
   }
 
   .card,
@@ -598,6 +653,108 @@ label {
 
   h1 {
     font-size: clamp(26px, 7vw, 38px);
+  }
+
+  .card h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  #active-team-card {
+    gap: 6px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  #active-team-card h2 {
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  .active-team {
+    font-size: 20px;
+  }
+
+  .riddle-box {
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .route-riddle-item {
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .riddle-item-head {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .route-riddle-question {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .route-riddle-meta {
+    font-size: 12px;
+  }
+
+  .compact-toggle-btn {
+    min-width: 24px;
+    width: 24px;
+    min-height: 24px;
+    font-size: 12px;
+  }
+
+  .riddle-answer-form {
+    gap: 7px;
+  }
+
+  .riddle-actions {
+    grid-template-columns: minmax(0, 1fr) 64px;
+    gap: 7px;
+  }
+
+  .hint-buy-btn {
+    min-width: 64px;
+    padding: 8px 8px;
+  }
+
+  input,
+  select,
+  button {
+    min-height: 42px;
+    font-size: 15px;
+    padding: 9px 10px;
+  }
+
+  .secondary-btn {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+
+  .result {
+    margin-top: 10px;
+    min-height: 42px;
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .rules {
+    gap: 6px;
+  }
+
+  .rules p {
+    font-size: 13px;
+    line-height: 1.45;
+    padding: 8px 10px;
+  }
+
+  .shape-1,
+  .shape-2 {
+    opacity: 0.25;
+    filter: blur(16px);
   }
 
 }
