@@ -422,7 +422,7 @@ h1 {
   max-width: 100%;
   padding: 0;
   font-weight: 700;
-  font-size: clamp(18px, 2vw, 22px);
+  font-size: clamp(18px, 2vw, 20px);
   line-height: 1.25;
   color: #173a64;
   overflow-wrap: anywhere;
@@ -430,19 +430,22 @@ h1 {
 }
 
 #active-team-card {
-  grid-column: span 4;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-column: span 12;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  gap: 8px 12px;
+  padding: 9px 14px;
+  border-radius: 10px;
   min-height: 0;
+  background: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+  border: 1px solid #cfe1f5;
+  box-shadow: none;
 }
 
 #active-team-card h2 {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ink-sub);
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -640,10 +643,9 @@ label {
   }
 
   #active-team-card {
-    grid-column: span 6;
-    grid-template-columns: auto 1fr auto;
+    grid-column: span 12;
     min-height: 0;
-    padding: 10px 14px;
+    padding: 8px 12px;
   }
 
   #active-team-card h2 {
@@ -709,9 +711,8 @@ label {
   }
 
   #active-team-card {
-    grid-template-columns: auto 1fr;
     gap: 6px 8px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     min-height: 0;
   }
 
