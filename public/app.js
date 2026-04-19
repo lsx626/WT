@@ -15,6 +15,7 @@ const elements = {
   answerResult: document.querySelector('#answer-result'),
   answerClueImage: document.querySelector('#answer-clue-image'),
   clueHistoryList: document.querySelector('#clue-history-list'),
+  finalAnswerBox: document.querySelector('#final-answer-box'),
   finalAnswerForm: document.querySelector('#final-answer-form'),
   finalAnswerInput: document.querySelector('#final-answer-input'),
   finalAnswerSubmit: document.querySelector('#final-answer-submit')
@@ -23,7 +24,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_6';
+const APP_DATA_VERSION = '20260419_7';
 
 function clearStaleClientState() {
   try {
@@ -491,6 +492,20 @@ function getCleanStationTitle(station, stationCode = '') {
   return titleWithoutRoute || rawTitle || '地点';
 }
 
+function isFinalAnswerAvailable(activeTeam) {
+  if (!activeTeam) {
+    return false;
+  }
+
+  const stationSequence = Array.isArray(activeTeam.stationSequence) ? activeTeam.stationSequence : [];
+  if (!stationSequence.length) {
+    return false;
+  }
+
+  const releasedStationOrder = Number(activeTeam.releasedStationOrder || 1);
+  return releasedStationOrder >= stationSequence.length;
+}
+
 function getActiveTeam() {
   return state.teams.find((team) => team.id === state.activeTeamId) || null;
 }
@@ -544,6 +559,9 @@ function renderActiveTeamState() {
       elements.finalAnswerSubmit.disabled = true;
       elements.finalAnswerSubmit.textContent = '验证终点';
     }
+    if (elements.finalAnswerBox) {
+      elements.finalAnswerBox.hidden = true;
+    }
     renderClueHistory(null, state.stations);
     return;
   }
@@ -552,6 +570,10 @@ function renderActiveTeamState() {
   elements.activeTeamCard.hidden = false;
   elements.activeTeamDisplay.textContent = `${activeTeam.points} 分`;
   syncTeamSwitchVisibility();
+
+  if (elements.finalAnswerBox) {
+    elements.finalAnswerBox.hidden = !isFinalAnswerAvailable(activeTeam);
+  }
 
   renderClueHistory(activeTeam, state.stations);
 
