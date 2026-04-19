@@ -7,7 +7,6 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_LEGACY_PATH = path.join(__dirname, 'data', 'db.json');
 const DB_CONTENT_PATH = path.join(__dirname, 'data', 'content.json');
 const DB_RUNTIME_PATH = path.join(__dirname, 'data', 'runtime.json');
 const JUDGE_PASSWORD = process.env.JUDGE_PASSWORD || '777777';
@@ -203,20 +202,6 @@ function sanitizeRuntimeDb(runtimeDb) {
   };
 }
 
-function splitLegacyDb(legacyDb) {
-  const contentDb = sanitizeContentDb({
-    stations: legacyDb?.stations,
-    routeQuestions: legacyDb?.routeQuestions
-  });
-
-  const runtimeDb = sanitizeRuntimeDb({
-    teams: legacyDb?.teams,
-    submissions: legacyDb?.submissions
-  });
-
-  return { contentDb, runtimeDb };
-}
-
 async function ensureSplitDbFiles() {
   const [hasContent, hasRuntime] = await Promise.all([
     fileExists(DB_CONTENT_PATH),
@@ -227,13 +212,8 @@ async function ensureSplitDbFiles() {
     return;
   }
 
-  let legacyDb = {};
-  if (await fileExists(DB_LEGACY_PATH)) {
-    const raw = await fs.readFile(DB_LEGACY_PATH, 'utf8');
-    legacyDb = JSON.parse(raw);
-  }
-
-  const { contentDb, runtimeDb } = splitLegacyDb(legacyDb);
+  const contentDb = sanitizeContentDb({});
+  const runtimeDb = sanitizeRuntimeDb({});
   if (!hasContent) {
     await fs.writeFile(DB_CONTENT_PATH, `${JSON.stringify(contentDb, null, 2)}\n`, 'utf8');
   }
