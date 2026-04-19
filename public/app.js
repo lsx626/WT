@@ -24,7 +24,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_11';
+const APP_DATA_VERSION = '20260419_13';
 
 function clearStaleClientState() {
   try {
@@ -63,6 +63,7 @@ const state = {
   nonogramDrafts: {},
   nonogramInteractingUntil: 0,
   lastNonogramToggle: null,
+  nonogramPointerSession: null,
   answerDrafts: {},
   teamSwitchEnabled: true,
   expandedSolvedItems: new Set()
@@ -762,8 +763,44 @@ elements.bigRiddlesList.addEventListener('pointerdown', (event) => {
     return;
   }
 
-  event.preventDefault();
-  toggleNonogramCell(cell);
+  state.nonogramPointerSession = {
+    pointerId: event.pointerId,
+    startX: Number(event.clientX || 0),
+    startY: Number(event.clientY || 0),
+    moved: false,
+    cell
+  };
+});
+
+elements.bigRiddlesList.addEventListener('pointermove', (event) => {
+  const session = state.nonogramPointerSession;
+  if (!session || session.pointerId !== event.pointerId || session.moved) {
+    return;
+  }
+
+  const dx = Math.abs(Number(event.clientX || 0) - session.startX);
+  const dy = Math.abs(Number(event.clientY || 0) - session.startY);
+  if (dx + dy >= 8) {
+    session.moved = true;
+  }
+});
+
+elements.bigRiddlesList.addEventListener('pointerup', (event) => {
+  const session = state.nonogramPointerSession;
+  if (!session || session.pointerId !== event.pointerId) {
+    return;
+  }
+
+  const targetCell = event.target.closest('.nonogram-cell');
+  const shouldToggle = !session.moved && targetCell && targetCell === session.cell;
+  state.nonogramPointerSession = null;
+  if (shouldToggle) {
+    toggleNonogramCell(targetCell);
+  }
+});
+
+elements.bigRiddlesList.addEventListener('pointercancel', () => {
+  state.nonogramPointerSession = null;
 });
 
 elements.bigRiddlesList.addEventListener('click', (event) => {
