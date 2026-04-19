@@ -11,6 +11,7 @@
       "solvedRouteQuestions": [],
       "clues": [],
       "boughtHints": {},
+      "finalAnswerVerified": false,
       "releasedStationOrder": 1,
       "createdAt": "2026-04-18T00:00:00.000Z"
     },
@@ -24,6 +25,7 @@
       "solvedRouteQuestions": [],
       "clues": [],
       "boughtHints": {},
+      "finalAnswerVerified": false,
       "releasedStationOrder": 1,
       "createdAt": "2026-04-18T00:00:01.000Z"
     },
@@ -78,6 +80,7 @@
       "boughtHints": {
         "s1": 2
       },
+      "finalAnswerVerified": true,
       "releasedStationOrder": 4,
       "createdAt": "2026-04-18T00:00:02.000Z"
     },
@@ -91,6 +94,7 @@
       "solvedRouteQuestions": [],
       "clues": [],
       "boughtHints": {},
+      "finalAnswerVerified": false,
       "releasedStationOrder": 1,
       "createdAt": "2026-04-18T00:00:03.000Z"
     }
@@ -230,6 +234,16 @@
       "result": "correct",
       "delta": 0,
       "at": "2026-04-19T14:04:40.845Z"
+    },
+    {
+      "id": "CwGCcplXyj",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": "相辉堂",
+      "result": "final-correct",
+      "delta": 0,
+      "at": "2026-04-19T14:15:19.950Z"
     }
   ],
   "settings": {

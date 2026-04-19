@@ -23,7 +23,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_5';
+const APP_DATA_VERSION = '20260419_6';
 
 function clearStaleClientState() {
   try {
@@ -313,6 +313,24 @@ function setTeamSwitchResult(message, resultState) {
   }
 }
 
+function syncTeamSwitchVisibility() {
+  const shouldShow = Boolean(state.activeTeamId && state.teamSwitchEnabled);
+
+  if (elements.teamSwitchToggle) {
+    elements.teamSwitchToggle.hidden = !shouldShow;
+  }
+
+  if (elements.teamSwitchForm && !shouldShow) {
+    elements.teamSwitchForm.hidden = true;
+  }
+
+  if (elements.teamSwitchResult && !shouldShow) {
+    elements.teamSwitchResult.hidden = true;
+    elements.teamSwitchResult.textContent = '';
+    elements.teamSwitchResult.classList.remove('ok', 'bad');
+  }
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -453,6 +471,14 @@ function getTeamLabel(team, fallbackNumber = 0) {
   return `第${derivedNumber}组`;
 }
 
+function getTeamMemberCount(team) {
+  return Array.isArray(team?.members) ? team.members.length : 0;
+}
+
+function isTeamFull(team) {
+  return getTeamMemberCount(team) >= 4;
+}
+
 function getCleanStationTitle(station, stationCode = '') {
   const rawTitle = String(station?.title || '').trim();
   const titleWithoutRoute = rawTitle.replace(/（[^）]*->[\s\S]*?）/g, '').trim();
@@ -485,7 +511,12 @@ function clearActiveTeam() {
 
 function fillTeamSelects(teams) {
   const html = teams
-    .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}（${team.points} 分）</option>`)
+    .map((team, index) => {
+      const memberCount = getTeamMemberCount(team);
+      const full = memberCount >= 4;
+      const fullTag = full ? '（该组人数已满）' : `（${memberCount}/4 人）`;
+      return `<option value="${team.id}" ${full ? 'disabled' : ''}>${getTeamLabel(team, index + 1)}${fullTag}（${team.points} 分）</option>`;
+    })
     .join('');
 
   elements.setupExistingTeam.innerHTML = html || '<option value="">暂无组别，请联系裁判</option>';
@@ -498,17 +529,7 @@ function renderActiveTeamState() {
     elements.teamSetupCard.hidden = false;
     elements.activeTeamCard.hidden = false;
     elements.activeTeamDisplay.textContent = '尚未设置组别';
-    if (elements.teamSwitchToggle) {
-      elements.teamSwitchToggle.hidden = true;
-    }
-    if (elements.teamSwitchForm) {
-      elements.teamSwitchForm.hidden = true;
-    }
-    if (elements.teamSwitchResult) {
-      elements.teamSwitchResult.hidden = true;
-      elements.teamSwitchResult.textContent = '';
-      elements.teamSwitchResult.classList.remove('ok', 'bad');
-    }
+    syncTeamSwitchVisibility();
     elements.bigRiddlesList.textContent = '请先选择组别后开始作答。';
     elements.routeRiddlesList.textContent = '请先选择组别后查看整条路线谜题。';
     if (elements.teamRouteSummary) {
@@ -530,19 +551,7 @@ function renderActiveTeamState() {
   elements.teamSetupCard.hidden = true;
   elements.activeTeamCard.hidden = false;
   elements.activeTeamDisplay.textContent = `${activeTeam.points} 分`;
-  if (elements.teamSwitchToggle) {
-    elements.teamSwitchToggle.hidden = !state.teamSwitchEnabled;
-  }
-  if (!state.teamSwitchEnabled) {
-    if (elements.teamSwitchForm) {
-      elements.teamSwitchForm.hidden = true;
-    }
-    if (elements.teamSwitchResult) {
-      elements.teamSwitchResult.hidden = true;
-      elements.teamSwitchResult.textContent = '';
-      elements.teamSwitchResult.classList.remove('ok', 'bad');
-    }
-  }
+  syncTeamSwitchVisibility();
 
   renderClueHistory(activeTeam, state.stations);
 
@@ -802,6 +811,8 @@ async function refreshAll(options = {}) {
     state.activeTeamId = getSavedActiveTeamId();
   }
 
+  syncTeamSwitchVisibility();
+
   if (skipRenderWhileTyping && (isTypingInAnswerInput() || isNonogramInteracting())) {
     return;
   }
@@ -824,6 +835,12 @@ elements.chooseTeamForm.addEventListener('submit', async (event) => {
   const selectedTeamId = elements.setupExistingTeam.value;
   if (!selectedTeamId) {
     alert('请先选择一个组别。');
+    return;
+  }
+
+  const selectedTeam = state.teams.find((team) => team.id === selectedTeamId);
+  if (isTeamFull(selectedTeam)) {
+    setResult('该组人数已满', 'bad');
     return;
   }
 
