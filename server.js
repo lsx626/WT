@@ -166,6 +166,13 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+
+    const acceptHeader = String(req.headers.accept || '');
+    const isHtmlEntry = acceptHeader.includes('text/html') || req.path === '/' || req.path === '/judge' || req.path === '/player';
+    if (isHtmlEntry) {
+      // Ask supported browsers to clear cached resources for this origin immediately.
+      res.setHeader('Clear-Site-Data', '"cache"');
+    }
   }
   next();
 });
