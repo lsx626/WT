@@ -6,12 +6,30 @@
       "number": 1,
       "name": "第1组",
       "members": [],
-      "points": 3,
-      "solvedStations": [],
+      "points": 9,
+      "solvedStations": [
+        "s4",
+        "s2"
+      ],
       "solvedRouteQuestions": [],
-      "releasedStationOrder": 1,
-      "clues": [],
+      "clues": [
+        {
+          "stationId": "s4",
+          "routeQuestionId": null,
+          "clue": "音沉独对海棠残，\n棠棣难寻连理枝。\n枝冷孤灯人不寐，\n寐中唯见月如钩。",
+          "clueImageUrl": null,
+          "at": "2026-04-19T13:37:15.602Z"
+        },
+        {
+          "stationId": "s2",
+          "routeQuestionId": null,
+          "clue": "谁家庭院落残红，\n红雨三千湿缃缥。\n缥缈难招长恨魄，\n魄归碧落路迢迢。",
+          "clueImageUrl": null,
+          "at": "2026-04-19T13:47:18.829Z"
+        }
+      ],
       "boughtHints": {},
+      "releasedStationOrder": 3,
       "createdAt": "2026-04-18T00:00:00.000Z"
     },
     {
@@ -22,9 +40,9 @@
       "points": 3,
       "solvedStations": [],
       "solvedRouteQuestions": [],
-      "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
+      "releasedStationOrder": 1,
       "createdAt": "2026-04-18T00:00:01.000Z"
     },
     {
@@ -32,12 +50,53 @@
       "number": 3,
       "name": "第3组",
       "members": [],
-      "points": 3,
-      "solvedStations": [],
-      "solvedRouteQuestions": [],
-      "releasedStationOrder": 1,
-      "clues": [],
-      "boughtHints": {},
+      "points": 12,
+      "solvedStations": [
+        "s3",
+        "s4",
+        "s2",
+        "s1"
+      ],
+      "solvedRouteQuestions": [
+        "r3q1",
+        "r3q4",
+        "r3q5",
+        "r3q6"
+      ],
+      "clues": [
+        {
+          "stationId": "s3",
+          "routeQuestionId": null,
+          "clue": "谁家庭院落残红，\n红雨三千湿缃缥。\n缥缈难招长恨魄，\n魄归碧落路迢迢。",
+          "clueImageUrl": null,
+          "at": "2026-04-19T13:36:03.699Z"
+        },
+        {
+          "stationId": "s4",
+          "routeQuestionId": null,
+          "clue": "音沉独对海棠残，\n棠棣难寻连理枝。\n枝冷孤灯人不寐，\n寐中唯见月如钩。",
+          "clueImageUrl": null,
+          "at": "2026-04-19T13:46:40.930Z"
+        },
+        {
+          "stationId": "s2",
+          "routeQuestionId": null,
+          "clue": "迢迢云海化烟灰，\n灰冷难回望帝心。\n心事终随马嵬血，\n血污泥埋旧铃音。",
+          "clueImageUrl": null,
+          "at": "2026-04-19T13:47:10.088Z"
+        },
+        {
+          "stationId": "s1",
+          "routeQuestionId": null,
+          "clue": "终极线索如下图：",
+          "clueImageUrl": "/route-images/final-clue.png",
+          "at": "2026-04-19T13:47:56.659Z"
+        }
+      ],
+      "boughtHints": {
+        "s3": 2
+      },
+      "releasedStationOrder": 4,
       "createdAt": "2026-04-18T00:00:02.000Z"
     },
     {
@@ -48,13 +107,171 @@
       "points": 3,
       "solvedStations": [],
       "solvedRouteQuestions": [],
-      "releasedStationOrder": 1,
       "clues": [],
       "boughtHints": {},
+      "releasedStationOrder": 1,
       "createdAt": "2026-04-18T00:00:03.000Z"
     }
   ],
-  "submissions": [],
+  "submissions": [
+    {
+      "id": "MSMsqMda6k",
+      "teamId": "team-3",
+      "stationId": "s3",
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "buy-hint",
+      "delta": -1,
+      "reason": "购买线索 #1",
+      "at": "2026-04-19T13:35:59.031Z"
+    },
+    {
+      "id": "OS-YmrmcRR",
+      "teamId": "team-3",
+      "stationId": "s3",
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "buy-hint",
+      "delta": -1,
+      "reason": "购买线索 #2",
+      "at": "2026-04-19T13:36:02.334Z"
+    },
+    {
+      "id": "cdhxu90VZL",
+      "teamId": "team-3",
+      "stationId": "s3",
+      "routeQuestionId": null,
+      "answer": "光华里",
+      "result": "correct",
+      "delta": 0,
+      "at": "2026-04-19T13:36:03.699Z"
+    },
+    {
+      "id": "aZR_hwwb4R",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": "r3q1",
+      "answer": "14",
+      "result": "route-correct",
+      "delta": 0.5,
+      "at": "2026-04-19T13:36:23.599Z"
+    },
+    {
+      "id": "657TQyZ_2I",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": "r3q4",
+      "answer": "涂料",
+      "result": "route-correct",
+      "delta": 0.5,
+      "at": "2026-04-19T13:36:32.351Z"
+    },
+    {
+      "id": "zpE1BoPrU3",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": "r3q5",
+      "answer": "大跃进",
+      "result": "route-correct",
+      "delta": 0.5,
+      "at": "2026-04-19T13:36:35.196Z"
+    },
+    {
+      "id": "oUhQXDZPky",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": "r3q6",
+      "answer": "复旦诗魂",
+      "result": "route-correct",
+      "delta": 0.5,
+      "at": "2026-04-19T13:36:46.038Z"
+    },
+    {
+      "id": "MXKQgT6Xft",
+      "teamId": "team-1",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "release-next",
+      "delta": 3,
+      "reason": "裁判放行 B",
+      "at": "2026-04-19T13:37:15.602Z"
+    },
+    {
+      "id": "g1uQbr5XHl",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "release-next",
+      "delta": 3,
+      "reason": "裁判放行 A",
+      "at": "2026-04-19T13:37:45.998Z"
+    },
+    {
+      "id": "9d9EhDoVrq",
+      "teamId": "team-3",
+      "stationId": "s4",
+      "routeQuestionId": null,
+      "answer": "逸夫楼",
+      "result": "correct",
+      "delta": 0,
+      "at": "2026-04-19T13:46:40.930Z"
+    },
+    {
+      "id": "APpjE7nf8D",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "release-next",
+      "delta": 3,
+      "reason": "裁判放行 B",
+      "at": "2026-04-19T13:47:00.995Z"
+    },
+    {
+      "id": "T1nm9GlwP4",
+      "teamId": "team-3",
+      "stationId": "s2",
+      "routeQuestionId": null,
+      "answer": "燕园",
+      "result": "correct",
+      "delta": 0,
+      "at": "2026-04-19T13:47:10.088Z"
+    },
+    {
+      "id": "AQFffYw4Uw",
+      "teamId": "team-1",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "release-next",
+      "delta": 3,
+      "reason": "裁判放行 C",
+      "at": "2026-04-19T13:47:18.829Z"
+    },
+    {
+      "id": "Y7olPgidFg",
+      "teamId": "team-3",
+      "stationId": null,
+      "routeQuestionId": null,
+      "answer": null,
+      "result": "release-next",
+      "delta": 3,
+      "reason": "裁判放行 D",
+      "at": "2026-04-19T13:47:33.202Z"
+    },
+    {
+      "id": "COmYmIArGA",
+      "teamId": "team-3",
+      "stationId": "s1",
+      "routeQuestionId": null,
+      "answer": "叶耀珍楼",
+      "result": "correct",
+      "delta": 0,
+      "at": "2026-04-19T13:47:56.659Z"
+    }
+  ],
   "settings": {
     "teamSwitchEnabled": true
   }

@@ -41,6 +41,7 @@ const TEAM_POEM_ORDERS = {
 const FINAL_IMAGE_CLUE_TEXT = '终极线索如下图：';
 const FINAL_IMAGE_CLUE_URL = '/route-images/final-clue.png';
 const FINAL_IMAGE_CLUE_PATH = path.join(__dirname, 'public', 'route-images', 'final-clue.png');
+const FINAL_DESTINATION_ANSWER = '相辉堂';
 const judgeSessions = new Map();
 const teamSwitchTokens = new Map();
 const TEAM_SWITCH_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -139,6 +140,7 @@ function sanitizeTeamRecord(team, fallbackIndex = 0) {
     solvedRouteQuestions: sanitizeStringArray(safeTeam.solvedRouteQuestions),
     clues: sanitizeClues(safeTeam.clues),
     boughtHints: sanitizeBoughtHints(safeTeam.boughtHints),
+    finalAnswerVerified: safeTeam.finalAnswerVerified === true,
     releasedStationOrder: Number.isInteger(safeTeam.releasedStationOrder) && safeTeam.releasedStationOrder > 0
       ? safeTeam.releasedStationOrder
       : 1,
@@ -503,6 +505,9 @@ function ensureTeamProgressStructure(team, stations) {
   if (!team.boughtHints || typeof team.boughtHints !== 'object') {
     team.boughtHints = {};
   }
+  if (team.finalAnswerVerified !== true) {
+    team.finalAnswerVerified = false;
+  }
   if (!Number.isInteger(team.releasedStationOrder) || team.releasedStationOrder < 1) {
     team.releasedStationOrder = 1;
   }
@@ -703,6 +708,7 @@ app.get('/api/teams', async (_, res) => {
         solvedStationAnswers: solvedAnswerBag.stations,
         solvedRouteAnswers: solvedAnswerBag.routes,
         boughtHints: team.boughtHints && typeof team.boughtHints === 'object' ? team.boughtHints : {},
+        finalAnswerVerified: team.finalAnswerVerified === true,
         purchasedHints,
         releasedStationOrder: Number.isInteger(team.releasedStationOrder) && team.releasedStationOrder > 0
           ? team.releasedStationOrder
@@ -767,6 +773,7 @@ app.post(
         solvedRouteQuestions: [],
         clues: [],
         boughtHints: {},
+        finalAnswerVerified: false,
         releasedStationOrder: 1,
         createdAt: new Date().toISOString()
       };
@@ -1160,6 +1167,54 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
       points: team.points,
       gained: 0,
       message: '谜题验证通过。地点体育活动加分由裁判手动记录，并由裁判放行下一地点。'
+    };
+  });
+
+  return res.status(200).json(result);
+}));
+
+app.post('/api/final-answer', asyncHandler(async (req, res) => {
+  const { teamId, answer } = req.body || {};
+
+  const result = await mutateDb((db) => {
+    const team = db.teams.find((item) => item.id === teamId);
+    if (!team) {
+      throw new HttpError(404, '队伍不存在。');
+    }
+    ensureTeamProgressStructure(team, db.stations);
+
+    if (team.finalAnswerVerified) {
+      return {
+        correct: true,
+        alreadyVerified: true,
+        message: '终点答案已验证通过。'
+      };
+    }
+
+    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(FINAL_DESTINATION_ANSWER);
+    db.submissions.push({
+      id: nanoid(10),
+      teamId,
+      stationId: null,
+      routeQuestionId: null,
+      answer: String(answer || ''),
+      result: isCorrect ? 'final-correct' : 'final-wrong',
+      delta: 0,
+      at: new Date().toISOString()
+    });
+
+    if (!isCorrect) {
+      return {
+        correct: false,
+        message: '终点答案不正确，请结合终极线索再确认。'
+      };
+    }
+
+    team.finalAnswerVerified = true;
+    return {
+      correct: true,
+      alreadyVerified: false,
+      message: '终点答案验证通过，请前往终点打卡。'
     };
   });
 

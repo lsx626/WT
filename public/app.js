@@ -11,15 +11,19 @@ const elements = {
   bigRiddlesList: document.querySelector('#big-riddles-list'),
   firstRiddleBox: document.querySelector('#first-riddle-box'),
   routeRiddlesList: document.querySelector('#route-riddles-list'),
+  teamRouteSummary: document.querySelector('#team-route-summary'),
   answerResult: document.querySelector('#answer-result'),
   answerClueImage: document.querySelector('#answer-clue-image'),
-  clueHistoryList: document.querySelector('#clue-history-list')
+  clueHistoryList: document.querySelector('#clue-history-list'),
+  finalAnswerForm: document.querySelector('#final-answer-form'),
+  finalAnswerInput: document.querySelector('#final-answer-input'),
+  finalAnswerSubmit: document.querySelector('#final-answer-submit')
 };
 
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_2';
+const APP_DATA_VERSION = '20260419_4';
 
 function clearStaleClientState() {
   try {
@@ -57,6 +61,7 @@ const state = {
   stations: [],
   nonogramDrafts: {},
   nonogramInteractingUntil: 0,
+  lastNonogramToggle: null,
   answerDrafts: {},
   teamSwitchEnabled: true,
   expandedSolvedItems: new Set()
@@ -84,11 +89,13 @@ function clearAnswerDraft(teamId, type, itemId) {
 
 function isTypingInAnswerInput() {
   const active = document.activeElement;
-  return Boolean(active && active.classList && active.classList.contains('riddle-answer-input'));
+  return Boolean(active && active.classList && (
+    active.classList.contains('riddle-answer-input') || active.classList.contains('final-answer-input')
+  ));
 }
 
 function markNonogramInteracting() {
-  state.nonogramInteractingUntil = Date.now() + 2000;
+  state.nonogramInteractingUntil = Date.now() + 7000;
 }
 
 function isNonogramInteracting() {
@@ -215,9 +222,50 @@ function renderClueHistory(activeTeam, stations) {
     return;
   }
 
+  // Remove exact duplicates first to prevent repeated history noise.
+  const dedupedClues = [];
+  const clueKeys = new Set();
+  for (const item of clues) {
+    const key = [
+      String(item?.stationId || '').trim(),
+      String(item?.routeQuestionId || '').trim(),
+      String(item?.clue || '').trim(),
+      String(item?.clueImageUrl || '').trim()
+    ].join('|');
+    if (clueKeys.has(key)) {
+      continue;
+    }
+    clueKeys.add(key);
+    dedupedClues.push(item);
+  }
+
   const stationMap = new Map((Array.isArray(stations) ? stations : []).map((item) => [item.id, item]));
   const routeMap = new Map((Array.isArray(activeTeam?.routeRiddles) ? activeTeam.routeRiddles : []).map((item) => [item.id, item]));
-  elements.clueHistoryList.innerHTML = clues
+  const finalClueGroup = {
+    texts: [],
+    imageUrl: ''
+  };
+  const normalClues = [];
+
+  dedupedClues.forEach((item) => {
+    const clueText = String(item?.clue || '').trim();
+    const clueImageUrl = String(item?.clueImageUrl || '').trim();
+    const isFinalImage = clueImageUrl.includes('final-clue.png');
+    const isFinalText = /终极线索|终点线索/.test(clueText);
+    if (isFinalImage || isFinalText) {
+      if (clueText && !finalClueGroup.texts.includes(clueText)) {
+        finalClueGroup.texts.push(clueText);
+      }
+      if (!finalClueGroup.imageUrl && clueImageUrl) {
+        finalClueGroup.imageUrl = clueImageUrl;
+      }
+      return;
+    }
+
+    normalClues.push(item);
+  });
+
+  const normalHtml = normalClues
     .map((item, index) => {
       const station = item.stationId ? stationMap.get(item.stationId) : null;
       const route = item.routeQuestionId ? routeMap.get(item.routeQuestionId) : null;
@@ -236,6 +284,19 @@ function renderClueHistory(activeTeam, stations) {
       `;
     })
     .join('');
+
+  const finalText = finalClueGroup.texts.join('\n');
+  const finalHtml = (finalText || finalClueGroup.imageUrl)
+    ? `
+      <article class="station-item">
+        <h3>终点线索</h3>
+        <p>${escapeHtml(finalText || '终点线索已解锁。')}</p>
+        ${finalClueGroup.imageUrl ? `<img class="route-question-image" src="${encodeURI(finalClueGroup.imageUrl)}" alt="终点线索截图" loading="lazy" />` : ''}
+      </article>
+    `
+    : '';
+
+  elements.clueHistoryList.innerHTML = `${normalHtml}${finalHtml}`;
 }
 
 function setTeamSwitchResult(message, resultState) {
@@ -391,6 +452,18 @@ function getTeamLabel(team, fallbackNumber = 0) {
   return `第${derivedNumber}组`;
 }
 
+function getCleanStationTitle(station, stationCode = '') {
+  const rawTitle = String(station?.title || '').trim();
+  const titleWithoutRoute = rawTitle.replace(/（[^）]*->[\s\S]*?）/g, '').trim();
+  if (stationCode === 'X') {
+    return 'Final';
+  }
+  if (stationCode) {
+    return stationCode;
+  }
+  return titleWithoutRoute || rawTitle || '地点';
+}
+
 function getActiveTeam() {
   return state.teams.find((team) => team.id === state.activeTeamId) || null;
 }
@@ -437,6 +510,18 @@ function renderActiveTeamState() {
     }
     elements.bigRiddlesList.textContent = '请先选择组别后开始作答。';
     elements.routeRiddlesList.textContent = '请先选择组别后查看整条路线谜题。';
+    if (elements.teamRouteSummary) {
+      elements.teamRouteSummary.textContent = '你组的线路为······';
+    }
+    if (elements.finalAnswerInput) {
+      elements.finalAnswerInput.value = '';
+      elements.finalAnswerInput.disabled = true;
+      setAnswerInputError(elements.finalAnswerInput, false);
+    }
+    if (elements.finalAnswerSubmit) {
+      elements.finalAnswerSubmit.disabled = true;
+      elements.finalAnswerSubmit.textContent = '验证终点';
+    }
     renderClueHistory(null, state.stations);
     return;
   }
@@ -460,12 +545,37 @@ function renderActiveTeamState() {
 
   renderClueHistory(activeTeam, state.stations);
 
+  if (elements.finalAnswerInput) {
+    const finalSolved = activeTeam.finalAnswerVerified === true;
+    const finalDraft = getAnswerDraft(activeTeam.id, 'final', 'destination');
+    elements.finalAnswerInput.value = finalSolved ? '相辉堂' : finalDraft;
+    elements.finalAnswerInput.disabled = finalSolved;
+    if (finalSolved) {
+      setAnswerInputError(elements.finalAnswerInput, false);
+    }
+  }
+  if (elements.finalAnswerSubmit) {
+    const finalSolved = activeTeam.finalAnswerVerified === true;
+    elements.finalAnswerSubmit.disabled = finalSolved;
+    elements.finalAnswerSubmit.textContent = finalSolved ? '已验证通过' : '验证终点';
+  }
+
   const solvedStations = Array.isArray(activeTeam.solvedStations) ? activeTeam.solvedStations : [];
   const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
   const releasedStationOrder = Number(activeTeam.releasedStationOrder || 1);
   const stationSequence = Array.isArray(activeTeam.stationSequence) ? activeTeam.stationSequence : [];
   const stationIndexMap = new Map(stationSequence.map((item, index) => [item.id, index]));
+  const stationCodeMap = new Map(stationSequence.map((item) => [item.id, item.code]));
   const releasedStationIds = new Set(stationSequence.slice(0, releasedStationOrder).map((item) => item.id));
+
+  if (elements.teamRouteSummary) {
+    const routeText = stationSequence.length
+      ? stationSequence
+        .map((item) => (item.code === 'X' ? 'Final' : String(item.code || '').trim()))
+        .join(' -> ')
+      : '······';
+    elements.teamRouteSummary.textContent = `你组的线路为 ${routeText}`;
+  }
 
   const bigRiddles = state.stations;
   if (!Array.isArray(bigRiddles) || !bigRiddles.length) {
@@ -508,7 +618,7 @@ function renderActiveTeamState() {
         return `
           <article class="route-riddle-item ${solved ? 'riddle-solved' : ''} ${compactSolved ? 'compact-solved' : ''}">
             <div class="riddle-item-head">
-              <p class="route-riddle-question">${escapeHtml(station.title)}</p>
+              <p class="route-riddle-question">${escapeHtml(getCleanStationTitle(station, stationCodeMap.get(station.id) || ''))}</p>
               ${solved ? `<button type="button" class="secondary-btn compact-toggle-btn" data-action="toggle-solved" data-kind="station" data-id="${station.id}" aria-label="${compactSolved ? '展开已完成题目' : '收起已完成题目'}">${compactSolved ? '▾' : '▴'}</button>` : ''}
             </div>
             <div class="solved-details">
@@ -585,6 +695,50 @@ function renderActiveTeamState() {
     .join('');
 }
 
+function toggleNonogramCell(cell) {
+  if (!cell || cell.disabled) {
+    return;
+  }
+
+  const stationId = cell.dataset.stationId;
+  const row = Number(cell.dataset.row);
+  const col = Number(cell.dataset.col);
+  const activeTeam = getActiveTeam();
+  if (!activeTeam || !stationId || Number.isNaN(row) || Number.isNaN(col)) {
+    return;
+  }
+
+  const dedupeKey = `${activeTeam.id}:${stationId}:${row}:${col}`;
+  const now = Date.now();
+  if (state.lastNonogramToggle?.key === dedupeKey && (now - Number(state.lastNonogramToggle.time || 0)) < 320) {
+    return;
+  }
+  state.lastNonogramToggle = { key: dedupeKey, time: now };
+
+  const station = state.stations.find((item) => item.id === stationId);
+  if (!station?.nonogram) {
+    return;
+  }
+
+  markNonogramInteracting();
+
+  const draft = getNonogramDraft(activeTeam.id, station);
+  const nextValue = Number(draft[row]?.[col] || 0) ? 0 : 1;
+  draft[row][col] = nextValue;
+  setNonogramDraft(activeTeam.id, station, draft);
+  cell.classList.toggle('filled', nextValue === 1);
+}
+
+elements.bigRiddlesList.addEventListener('pointerdown', (event) => {
+  const cell = event.target.closest('.nonogram-cell');
+  if (!cell || cell.disabled) {
+    return;
+  }
+
+  event.preventDefault();
+  toggleNonogramCell(cell);
+});
+
 elements.bigRiddlesList.addEventListener('click', (event) => {
   const toggleButton = event.target.closest('[data-action="toggle-solved"]');
   if (toggleButton) {
@@ -615,26 +769,7 @@ elements.bigRiddlesList.addEventListener('click', (event) => {
     return;
   }
 
-  const stationId = cell.dataset.stationId;
-  const row = Number(cell.dataset.row);
-  const col = Number(cell.dataset.col);
-  const activeTeam = getActiveTeam();
-  if (!activeTeam || !stationId || Number.isNaN(row) || Number.isNaN(col)) {
-    return;
-  }
-
-  const station = state.stations.find((item) => item.id === stationId);
-  if (!station?.nonogram) {
-    return;
-  }
-
-  markNonogramInteracting();
-
-  const draft = getNonogramDraft(activeTeam.id, station);
-  const nextValue = Number(draft[row]?.[col] || 0) ? 0 : 1;
-  draft[row][col] = nextValue;
-  setNonogramDraft(activeTeam.id, station, draft);
-  cell.classList.toggle('filled', nextValue === 1);
+  toggleNonogramCell(cell);
 });
 
 elements.routeRiddlesList.addEventListener('click', (event) => {
@@ -793,6 +928,24 @@ async function buyStationHint(stationId) {
   await refreshAll();
 }
 
+async function submitFinalAnswer(answerText) {
+  const activeTeam = requireActiveTeam();
+  const result = await request('/api/final-answer', {
+    method: 'POST',
+    body: JSON.stringify({
+      teamId: activeTeam.id,
+      answer: answerText
+    })
+  });
+
+  setResult(result.message, result.correct ? 'ok' : 'bad');
+  if (result.correct) {
+    clearAnswerDraft(activeTeam.id, 'final', 'destination');
+    await refreshAll();
+  }
+  return result;
+}
+
 elements.bigRiddlesList.addEventListener('submit', async (event) => {
   const form = event.target.closest('.riddle-answer-form');
   if (!form) {
@@ -875,6 +1028,36 @@ elements.routeRiddlesList.addEventListener('input', (event) => {
   setAnswerInputError(input, false);
 
   setAnswerDraft(activeTeam.id, 'route', form.dataset.id, input.value);
+});
+
+elements.finalAnswerForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  try {
+    const answerText = String(elements.finalAnswerInput?.value || '').trim();
+    if (!answerText) {
+      throw new Error('请输入终点答案后再提交。');
+    }
+
+    setAnswerInputError(elements.finalAnswerInput, false);
+    const result = await submitFinalAnswer(answerText);
+    if (!result.correct) {
+      setAnswerInputError(elements.finalAnswerInput, true, '答案错误');
+    }
+  } catch (error) {
+    setResult(error.message, 'bad');
+  }
+});
+
+elements.finalAnswerInput?.addEventListener('input', (event) => {
+  const activeTeam = getActiveTeam();
+  const input = event.target;
+  if (!activeTeam || !input) {
+    return;
+  }
+
+  setAnswerInputError(input, false);
+  setAnswerDraft(activeTeam.id, 'final', 'destination', input.value);
 });
 
 refreshAll()
