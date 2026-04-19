@@ -106,17 +106,19 @@ function sanitizeClues(value) {
   return value
     .map((item) => {
       const stationId = String(item?.stationId || '').trim();
+      const routeQuestionId = String(item?.routeQuestionId || '').trim();
       const clue = String(item?.clue || '').trim();
-      if (!stationId || !clue) {
+      const clueImageUrl = String(item?.clueImageUrl || '').trim();
+      if ((!stationId && !routeQuestionId) || (!clue && !clueImageUrl)) {
         return null;
       }
 
       const rawAt = String(item?.at || '').trim();
       const at = rawAt || new Date().toISOString();
-      const clueImageUrl = String(item?.clueImageUrl || '').trim();
       return {
-        stationId,
-        clue,
+        stationId: stationId || null,
+        routeQuestionId: routeQuestionId || null,
+        clue: clue || '（图片线索）',
         clueImageUrl: clueImageUrl || null,
         at
       };
@@ -682,6 +684,8 @@ app.get('/api/teams', async (_, res) => {
             code: `${routeLetter}${itemIndex + 1}`,
             question: item.question,
             questionImageUrl: item.questionImageUrl || '',
+            clue: item.clue || null,
+            clueImageUrl: item.clueImageUrl || null,
             formatHint: item.formatHint || '',
             points: Number(item.points || 0)
           }));
@@ -698,6 +702,8 @@ app.get('/api/teams', async (_, res) => {
             code: `${routeLetter}1`,
             question: firstQuestion.question,
             questionImageUrl: firstQuestion.questionImageUrl || '',
+            clue: firstQuestion.clue || null,
+            clueImageUrl: firstQuestion.clueImageUrl || null,
             formatHint: firstQuestion.formatHint || '',
             points: Number(firstQuestion.points || 0)
           };
@@ -791,6 +797,28 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
     const maxOrder = Math.max(1, stationSequence.length || 1);
     const addedPoints = rawPoints;
     team.points = Math.max(0, roundScore(team.points + addedPoints));
+
+    const currentIndex = Math.max(0, Math.min(maxOrder - 1, (team.releasedStationOrder || 1) - 1));
+    const completedStation = stationSequence[currentIndex] || null;
+    if (completedStation) {
+      if (!team.solvedStations.includes(completedStation.id)) {
+        team.solvedStations.push(completedStation.id);
+      }
+
+      const hasStationClue = team.clues.some((item) => item.stationId === completedStation.id);
+      if (!hasStationClue) {
+        const clueData = getStationClueForTeam(db.stations, team, completedStation);
+        if (clueData.clue || clueData.clueImageUrl) {
+          team.clues.push({
+            stationId: completedStation.id,
+            routeQuestionId: null,
+            clue: clueData.clue || '（图片线索）',
+            clueImageUrl: clueData.clueImageUrl || null,
+            at: new Date().toISOString()
+          });
+        }
+      }
+    }
 
     if (team.releasedStationOrder >= maxOrder) {
       const releasedStation = stationSequence[Math.max(0, maxOrder - 1)] || null;
@@ -978,10 +1006,16 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
         throw new HttpError(404, '路线小谜题不存在。');
       }
 
+      const resolvedRouteClue = String(routeQuestion.clue || '').trim() || null;
+      const resolvedRouteClueImageUrl = String(routeQuestion.clueImageUrl || '').trim() || null;
+      const solvedRouteClue = team.clues.find((item) => item.routeQuestionId === routeQuestionId);
+
       if (team.solvedRouteQuestions.includes(routeQuestionId)) {
         return {
           correct: true,
           alreadySolved: true,
+          clue: solvedRouteClue?.clue || resolvedRouteClue,
+          clueImageUrl: solvedRouteClue?.clueImageUrl || resolvedRouteClueImageUrl,
           points: team.points,
           message: '该小谜题已通过，重复提交不加分。'
         };
@@ -1008,10 +1042,21 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
 
       team.solvedRouteQuestions.push(routeQuestionId);
       team.points = roundScore(team.points + Number(routeQuestion.points || 0));
+      if (resolvedRouteClue || resolvedRouteClueImageUrl) {
+        team.clues.push({
+          stationId: null,
+          routeQuestionId,
+          clue: resolvedRouteClue || '路线线索已解锁。',
+          clueImageUrl: resolvedRouteClueImageUrl,
+          at: new Date().toISOString()
+        });
+      }
 
       return {
         correct: true,
         alreadySolved: false,
+        clue: resolvedRouteClue,
+        clueImageUrl: resolvedRouteClueImageUrl,
         points: team.points,
         gained: Number(routeQuestion.points || 0),
         message: Number(routeQuestion.points || 0) > 0

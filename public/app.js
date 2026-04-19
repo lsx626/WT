@@ -12,11 +12,44 @@ const elements = {
   firstRiddleBox: document.querySelector('#first-riddle-box'),
   routeRiddlesList: document.querySelector('#route-riddles-list'),
   answerResult: document.querySelector('#answer-result'),
-  answerClueImage: document.querySelector('#answer-clue-image')
+  answerClueImage: document.querySelector('#answer-clue-image'),
+  clueHistoryList: document.querySelector('#clue-history-list')
 };
 
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
+const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
+const APP_DATA_VERSION = '20260419_2';
+
+function clearStaleClientState() {
+  try {
+    const keysToRemove = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key) {
+        continue;
+      }
+
+      if (key === ACTIVE_TEAM_STORAGE_KEY || key === APP_DATA_VERSION_KEY || key.startsWith('nonogram_draft_')) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    localStorage.setItem(APP_DATA_VERSION_KEY, APP_DATA_VERSION);
+    document.cookie = `${ACTIVE_TEAM_COOKIE_KEY}=; path=/; max-age=0; samesite=lax`;
+  } catch (_) {
+    // Ignore storage failures and continue booting.
+  }
+}
+
+try {
+  if (localStorage.getItem(APP_DATA_VERSION_KEY) !== APP_DATA_VERSION) {
+    clearStaleClientState();
+  }
+} catch (_) {
+  // Ignore storage failures and continue booting.
+}
 
 const state = {
   activeTeamId: getSavedActiveTeamId(),
@@ -137,6 +170,45 @@ function setResult(message, resultState, clueImageUrl = '') {
 
   elements.answerClueImage.hidden = false;
   elements.answerClueImage.innerHTML = `<img src="${encodeURI(clueImageUrl)}" alt="终点线索截图" loading="lazy" />`;
+}
+
+function renderClueHistory(activeTeam, stations) {
+  if (!elements.clueHistoryList) {
+    return;
+  }
+
+  if (!activeTeam) {
+    elements.clueHistoryList.textContent = '请先选择组别后查看已获得线索。';
+    return;
+  }
+
+  const clues = Array.isArray(activeTeam?.clues) ? activeTeam.clues : [];
+  if (!clues.length) {
+    elements.clueHistoryList.textContent = '尚未获得线索。';
+    return;
+  }
+
+  const stationMap = new Map((Array.isArray(stations) ? stations : []).map((item) => [item.id, item]));
+  const routeMap = new Map((Array.isArray(activeTeam?.routeRiddles) ? activeTeam.routeRiddles : []).map((item) => [item.id, item]));
+  elements.clueHistoryList.innerHTML = clues
+    .map((item, index) => {
+      const station = item.stationId ? stationMap.get(item.stationId) : null;
+      const route = item.routeQuestionId ? routeMap.get(item.routeQuestionId) : null;
+      const title = station?.title
+        || (route ? `路线小谜题 ${route.code || route.id}` : '')
+        || item.stationId
+        || item.routeQuestionId
+        || `线索 ${index + 1}`;
+      const clueImageUrl = String(item.clueImageUrl || '').trim();
+      return `
+        <article class="station-item">
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(item.clue || '（无文字线索）')}</p>
+          ${clueImageUrl ? `<img class="route-question-image" src="${encodeURI(clueImageUrl)}" alt="线索截图" loading="lazy" />` : ''}
+        </article>
+      `;
+    })
+    .join('');
 }
 
 function setTeamSwitchResult(message, resultState) {
@@ -338,6 +410,7 @@ function renderActiveTeamState() {
     }
     elements.bigRiddlesList.textContent = '请先选择组别后开始作答。';
     elements.routeRiddlesList.textContent = '请先选择组别后查看整条路线谜题。';
+    renderClueHistory(null, state.stations);
     return;
   }
 
@@ -357,6 +430,8 @@ function renderActiveTeamState() {
       elements.teamSwitchResult.classList.remove('ok', 'bad');
     }
   }
+
+  renderClueHistory(activeTeam, state.stations);
 
   const solvedStations = Array.isArray(activeTeam.solvedStations) ? activeTeam.solvedStations : [];
   const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
@@ -566,6 +641,8 @@ async function refreshAll(options = {}) {
   } else {
     renderActiveTeamState();
   }
+
+  renderClueHistory(getActiveTeam(), stations);
 }
 
 elements.chooseTeamForm.addEventListener('submit', async (event) => {
