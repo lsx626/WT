@@ -477,6 +477,15 @@ function getStationClueForTeam(stations, team, station) {
   };
 }
 
+function getStationAnswerPoints(team, station) {
+  if (!station || station.id === 's5') {
+    return 0;
+  }
+
+  const boughtCount = Number(team?.boughtHints?.[station.id] || 0);
+  return Math.max(0, 2 - boughtCount);
+}
+
 function getTeamRouteQuestionByOrder(db, team, order) {
   const routeKey = getRouteKeyByTeamNumber(db.routeQuestions, team?.number);
   if (!routeKey) {
@@ -1134,13 +1143,14 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     const resolvedClue = clueData.clue;
     const resolvedClueImageUrl = clueData.clueImageUrl;
     const isCorrect = normalizeAnswer(answer) === normalizeAnswer(expectedAnswer);
+    const gained = getStationAnswerPoints(team, station);
     db.submissions.push({
       id: nanoid(10),
       teamId,
       stationId,
       answer: String(answer || ''),
       result: isCorrect ? 'correct' : 'wrong',
-      delta: 0,
+      delta: isCorrect ? gained : 0,
       at: new Date().toISOString()
     });
 
@@ -1165,8 +1175,10 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
       clue: resolvedClue,
       clueImageUrl: resolvedClueImageUrl || null,
       points: team.points,
-      gained: 0,
-      message: '谜题验证通过。地点体育活动加分由裁判手动记录，并由裁判放行下一地点。'
+      gained,
+      message: gained > 0
+        ? `谜题验证通过，+${gained} 分！`
+        : '谜题验证通过，但当前无可得分。'
     };
   });
 

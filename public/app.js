@@ -25,7 +25,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_15';
+const APP_DATA_VERSION = '20260419_16';
 
 function clearStaleClientState() {
   try {
@@ -508,6 +508,15 @@ function isFinalAnswerAvailable(activeTeam) {
   return releasedStationOrder >= stationSequence.length;
 }
 
+function getStationAnswerPoints(team, station) {
+  if (!station || station.id === 's5') {
+    return 0;
+  }
+
+  const boughtCount = Number(team?.boughtHints?.[station.id] || 0);
+  return Math.max(0, 2 - boughtCount);
+}
+
 function getActiveTeam() {
   return state.teams.find((team) => team.id === state.activeTeamId) || null;
 }
@@ -641,6 +650,7 @@ function renderActiveTeamState() {
         const boughtCount = purchasedHints.length;
         const hintCount = Number(station.hintCount || 0);
         const leftHints = Math.max(0, hintCount - boughtCount);
+        const answerPoints = getStationAnswerPoints(activeTeam, station);
         const lockTip = solved ? ' | 已答对并锁定' : '';
         const nonogramHtml = renderNonogram(station, activeTeam.id, solved);
         const purchasedHintsHtml = purchasedHints.length
@@ -657,7 +667,7 @@ function renderActiveTeamState() {
             <div class="solved-details">
               <p class="route-riddle-question">${escapeHtml(station.question)}</p>
               ${nonogramHtml}
-              <p class="route-riddle-meta">分值：${Number(station.points || 0)} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
+              <p class="route-riddle-meta">答对可得：${answerPoints} 分 | 已购提示：${boughtCount}/${hintCount}${lockTip}</p>
               ${purchasedHintsHtml}
               <form class="riddle-answer-form" data-type="station" data-id="${station.id}">
                 <div class="answer-input-wrap">
