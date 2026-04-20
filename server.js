@@ -15,10 +15,10 @@ const MAX_TEAMS = 4;
 const MAX_TEAM_MEMBERS = 4;
 const RUNTIME_SCHEMA_VERSION = 2;
 const TEAM_STATION_CODE_SEQUENCES = {
-  1: ['A', 'B', 'C', 'D'],
-  2: ['B', 'C', 'A', 'D'],
-  3: ['C', 'A', 'B', 'D'],
-  4: ['D', 'C', 'B', 'A']
+  1: ['C', 'A', 'D', 'B'],
+  2: ['A', 'D', 'B', 'C'],
+  3: ['B', 'C', 'A', 'D'],
+  4: ['D', 'B', 'C', 'A']
 };
 const STATION_CODE_TO_ID = {
   A: 's4',

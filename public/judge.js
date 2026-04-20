@@ -97,18 +97,45 @@ function fillTeamSelect(teams) {
   elements.releaseTeam.innerHTML = html || '<option value="">暂无小组</option>';
 }
 
+function isStationSolvedByAnswer(team, stationId) {
+  const rawAnswer = team?.solvedStationAnswers?.[stationId];
+  return String(rawAnswer || '').trim().length > 0;
+}
+
+function getReleasedStationProgress(team) {
+  const sequence = Array.isArray(team?.stationSequence) ? team.stationSequence : [];
+  const releasedOrder = Number(team?.releasedStationOrder || 1);
+  const maxCount = Math.max(0, Math.min(sequence.length, releasedOrder));
+
+  return sequence.slice(0, maxCount).map((item) => ({
+    id: item.id,
+    code: String(item.code || '-').trim() || '-',
+    solved: isStationSolvedByAnswer(team, item.id)
+  }));
+}
+
 function renderTeamStatus(teams) {
   elements.teamStatusList.innerHTML = teams
-    .map(
-      (team, index) => `
+    .map((team, index) => {
+      const releasedProgress = getReleasedStationProgress(team);
+      const solvedReleasedCount = releasedProgress.filter((item) => item.solved).length;
+      const progressText = releasedProgress.length
+        ? releasedProgress
+          .map((item) => `${item.code}${item.solved ? ' 已解' : ' 未解'}`)
+          .join(' | ')
+        : '暂无';
+
+      return `
       <article class="station-item">
         <h3>${getTeamLabel(team, index + 1)} · ${team.points} 分</h3>
         <p><strong>当前放行到：</strong>${team.releasedStationCode || '-'} 点</p>
         <p><strong>已完成地点：</strong>${team.solvedStations?.length || 0} 个</p>
+        <p><strong>已放行题目解出：</strong>${solvedReleasedCount}/${releasedProgress.length} 个</p>
+        <p><strong>已放行站点状态：</strong>${progressText}</p>
         <p><strong>已购线索：</strong>${Object.values(team.boughtHints || {}).reduce((sum, item) => sum + Number(item || 0), 0)} 条</p>
       </article>
-    `
-    )
+    `;
+    })
     .join('');
 }
 
