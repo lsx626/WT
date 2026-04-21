@@ -1162,6 +1162,7 @@ app.post('/api/answer', asyncHandler(async (req, res) => {
     }
 
     team.solvedStations.push(stationId);
+    team.points = roundScore(team.points + gained);
     team.clues.push({
       stationId,
       clue: resolvedClue,
