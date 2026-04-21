@@ -13,7 +13,7 @@
       "boughtHints": {},
       "finalAnswerVerified": false,
       "releasedStationOrder": 1,
-      "createdAt": "2026-04-18T00:00:00.000Z"
+      "createdAt": "2026-04-21T00:00:00.000Z"
     },
     {
       "id": "team-2",
@@ -27,7 +27,7 @@
       "boughtHints": {},
       "finalAnswerVerified": false,
       "releasedStationOrder": 1,
-      "createdAt": "2026-04-18T00:00:01.000Z"
+      "createdAt": "2026-04-21T00:00:01.000Z"
     },
     {
       "id": "team-3",
@@ -41,7 +41,7 @@
       "boughtHints": {},
       "finalAnswerVerified": false,
       "releasedStationOrder": 1,
-      "createdAt": "2026-04-18T00:00:02.000Z"
+      "createdAt": "2026-04-21T00:00:02.000Z"
     },
     {
       "id": "team-4",
@@ -55,7 +55,7 @@
       "boughtHints": {},
       "finalAnswerVerified": false,
       "releasedStationOrder": 1,
-      "createdAt": "2026-04-18T00:00:03.000Z"
+      "createdAt": "2026-04-21T00:00:03.000Z"
     }
   ],
   "submissions": [],
