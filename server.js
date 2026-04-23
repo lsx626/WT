@@ -38,6 +38,12 @@ const TEAM_POEM_ORDERS = {
   3: [0, 2, 1],
   4: [1, 0, 2]
 };
+const TEAM_ROUTE_KEY_MAP = {
+  1: 'route1',
+  2: 'route2',
+  3: 'route3',
+  4: 'route4'
+};
 const FINAL_IMAGE_CLUE_TEXT = '终极线索如下图：';
 const FINAL_IMAGE_CLUE_URL = '/route-images/final-clue.png';
 const FINAL_IMAGE_CLUE_PATH = path.join(__dirname, 'public', 'route-images', 'final-clue.png');
@@ -358,6 +364,11 @@ function getRouteKeyByTeamNumber(routeQuestions, teamNumber) {
   }
 
   const normalizedTeamNumber = Number.isInteger(teamNumber) && teamNumber > 0 ? teamNumber : 1;
+  const mappedRouteKey = TEAM_ROUTE_KEY_MAP[normalizedTeamNumber];
+  if (mappedRouteKey && routeKeys.includes(mappedRouteKey)) {
+    return mappedRouteKey;
+  }
+
   const routeIndex = (normalizedTeamNumber - 1) % routeKeys.length;
   return routeKeys[routeIndex];
 }

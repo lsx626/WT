@@ -90,11 +90,21 @@ function setJudgeAuthed(authed) {
 }
 
 function fillTeamSelect(teams) {
+  const previousValue = elements.releaseTeam.value;
   const html = teams
     .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}（${team.points} 分）</option>`)
     .join('');
 
   elements.releaseTeam.innerHTML = html || '<option value="">暂无小组</option>';
+
+  if (previousValue && teams.some((team) => team.id === previousValue)) {
+    elements.releaseTeam.value = previousValue;
+    return;
+  }
+
+  if (!elements.releaseTeam.value && teams.length) {
+    elements.releaseTeam.value = teams[0].id;
+  }
 }
 
 function isStationSolvedByAnswer(team, stationId) {
