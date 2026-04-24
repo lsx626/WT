@@ -25,7 +25,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260424_3';
+const APP_DATA_VERSION = '20260425_2';
 
 function clearStaleClientState() {
   try {
@@ -594,6 +594,9 @@ function renderActiveTeamState() {
     elements.teamSetupCard.hidden = false;
     elements.activeTeamCard.hidden = false;
     elements.activeTeamDisplay.textContent = '尚未设置组别';
+    if (elements.firstRiddleBox) {
+      elements.firstRiddleBox.hidden = false;
+    }
     syncTeamSwitchVisibility();
     elements.bigRiddlesList.textContent = '请先选择组别后开始作答。';
     elements.routeRiddlesList.textContent = '请先选择组别后查看整条路线谜题。';
@@ -650,9 +653,15 @@ function renderActiveTeamState() {
   const solvedRouteQuestions = Array.isArray(activeTeam.solvedRouteQuestions) ? activeTeam.solvedRouteQuestions : [];
   const releasedStationOrder = Number(activeTeam.releasedStationOrder || 1);
   const stationSequence = Array.isArray(activeTeam.stationSequence) ? activeTeam.stationSequence : [];
+  const firstStationId = stationSequence[0]?.id || '';
+  const routeRiddlesUnlocked = Boolean(firstStationId && solvedStations.includes(firstStationId));
   const stationIndexMap = new Map(stationSequence.map((item, index) => [item.id, index]));
   const stationCodeMap = new Map(stationSequence.map((item) => [item.id, item.code]));
   const releasedStationIds = new Set(stationSequence.slice(0, releasedStationOrder).map((item) => item.id));
+
+  if (elements.firstRiddleBox) {
+    elements.firstRiddleBox.hidden = !routeRiddlesUnlocked;
+  }
 
   if (elements.teamRouteSummary) {
     const routeText = stationSequence.length
@@ -668,7 +677,7 @@ function renderActiveTeamState() {
     elements.bigRiddlesList.textContent = '地点谜题暂未配置，请联系裁判。';
   } else {
     const visibleBigRiddles = bigRiddles
-      .filter((station) => releasedStationIds.has(station.id))
+      .filter((station) => releasedStationIds.has(station.id) && station.id !== 's5')
       .sort((a, b) => {
         const indexA = stationIndexMap.has(a.id) ? stationIndexMap.get(a.id) : Number.MAX_SAFE_INTEGER;
         const indexB = stationIndexMap.has(b.id) ? stationIndexMap.get(b.id) : Number.MAX_SAFE_INTEGER;
@@ -737,6 +746,11 @@ function renderActiveTeamState() {
   }
 
   const routeRiddles = Array.isArray(activeTeam.routeRiddles) ? activeTeam.routeRiddles : [];
+  if (!routeRiddlesUnlocked) {
+    elements.routeRiddlesList.textContent = '请先答对第一道地点谜题。';
+    return;
+  }
+
   if (!routeRiddles.length) {
     elements.routeRiddlesList.textContent = '该组起点到首点的小任务暂未配置，请联系裁判。';
     return;
