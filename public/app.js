@@ -25,7 +25,7 @@ const elements = {
 const ACTIVE_TEAM_STORAGE_KEY = 'campus-orienteering-active-team-id';
 const ACTIVE_TEAM_COOKIE_KEY = 'campus_orienteering_active_team_id';
 const APP_DATA_VERSION_KEY = 'campus-orienteering-app-version';
-const APP_DATA_VERSION = '20260419_16';
+const APP_DATA_VERSION = '20260424_3';
 
 function clearStaleClientState() {
   try {
@@ -67,7 +67,8 @@ const state = {
   nonogramPointerSession: null,
   answerDrafts: {},
   teamSwitchEnabled: true,
-  expandedSolvedItems: new Set()
+  expandedSolvedItems: new Set(),
+  lastRenderSignature: ''
 };
 
 function getAnswerDraftKey(teamId, type, itemId) {
@@ -95,6 +96,11 @@ function isTypingInAnswerInput() {
   return Boolean(active && active.classList && (
     active.classList.contains('riddle-answer-input') || active.classList.contains('final-answer-input')
   ));
+}
+
+function isInteractingWithSelect() {
+  const active = document.activeElement;
+  return Boolean(active && active.tagName === 'SELECT');
 }
 
 function markNonogramInteracting() {
@@ -403,6 +409,19 @@ function setNonogramDraft(teamId, station, matrix) {
   }
 }
 
+function lockNonogramToSolution(teamId, stationId) {
+  const station = state.stations.find((item) => item.id === stationId);
+  const puzzle = station?.nonogram;
+  if (!teamId || !station || !puzzle) {
+    return;
+  }
+
+  const rows = Number(puzzle.rows || 0);
+  const cols = Number(puzzle.cols || 0);
+  const solution = normalizeMatrix(puzzle.solution, rows, cols);
+  setNonogramDraft(teamId, station, solution);
+}
+
 function renderNonogram(station, teamId, solved) {
   const puzzle = station?.nonogram;
   if (!puzzle) {
@@ -532,15 +551,40 @@ function clearActiveTeam() {
   state.activeTeamId = '';
   localStorage.removeItem(ACTIVE_TEAM_STORAGE_KEY);
   removeCookie(ACTIVE_TEAM_COOKIE_KEY);
+  state.lastRenderSignature = '';
   renderActiveTeamState();
 }
 
+function buildRenderSignature(teams, stations, teamSwitchEnabled, activeTeamId) {
+  return JSON.stringify({
+    activeTeamId: activeTeamId || '',
+    teamSwitchEnabled: Boolean(teamSwitchEnabled),
+    teams,
+    stations
+  });
+}
+
 function fillTeamSelects(teams) {
+  const previousValue = elements.setupExistingTeam.value;
   const html = teams
     .map((team, index) => `<option value="${team.id}">${getTeamLabel(team, index + 1)}</option>`)
     .join('');
 
   elements.setupExistingTeam.innerHTML = html || '<option value="">暂无组别，请联系裁判</option>';
+
+  if (previousValue && teams.some((team) => team.id === previousValue)) {
+    elements.setupExistingTeam.value = previousValue;
+    return;
+  }
+
+  if (state.activeTeamId && teams.some((team) => team.id === state.activeTeamId)) {
+    elements.setupExistingTeam.value = state.activeTeamId;
+    return;
+  }
+
+  if (!elements.setupExistingTeam.value && teams.length) {
+    elements.setupExistingTeam.value = teams[0].id;
+  }
 }
 
 function renderActiveTeamState() {
@@ -574,7 +618,7 @@ function renderActiveTeamState() {
 
   elements.teamSetupCard.hidden = true;
   elements.activeTeamCard.hidden = false;
-  elements.activeTeamDisplay.textContent = `${activeTeam.points} 分`;
+  elements.activeTeamDisplay.textContent = `${getTeamLabel(activeTeam)} | ${activeTeam.points} 分`;
   syncTeamSwitchVisibility();
 
   if (elements.finalAnswerBox) {
@@ -882,7 +926,17 @@ async function refreshAll(options = {}) {
 
   syncTeamSwitchVisibility();
 
-  if (skipRenderWhileTyping && (isTypingInAnswerInput() || isNonogramInteracting())) {
+  if (skipRenderWhileTyping && (isTypingInAnswerInput() || isNonogramInteracting() || isInteractingWithSelect())) {
+    return;
+  }
+
+  const currentSignature = buildRenderSignature(
+    teams,
+    stations,
+    state.teamSwitchEnabled,
+    state.activeTeamId
+  );
+  if (currentSignature === state.lastRenderSignature) {
     return;
   }
 
@@ -896,6 +950,12 @@ async function refreshAll(options = {}) {
   }
 
   renderClueHistory(getActiveTeam(), stations);
+  state.lastRenderSignature = buildRenderSignature(
+    state.teams,
+    state.stations,
+    state.teamSwitchEnabled,
+    state.activeTeamId
+  );
 }
 
 elements.chooseTeamForm.addEventListener('submit', async (event) => {
@@ -996,6 +1056,9 @@ async function submitRiddleAnswer(answerType, itemId, answerText) {
 
   setResult(message, status, '');
   if (result.correct) {
+    if (answerType === 'station') {
+      lockNonogramToSolution(activeTeam.id, itemId);
+    }
     clearAnswerDraft(activeTeam.id, answerType, itemId);
     await refreshAll();
   }
