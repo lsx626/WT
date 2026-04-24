@@ -39,10 +39,10 @@ const TEAM_POEM_ORDERS = {
   4: [1, 0, 2]
 };
 const TEAM_ROUTE_KEY_MAP = {
-  1: 'route1',
-  2: 'route2',
-  3: 'route3',
-  4: 'route4'
+  1: 'route4',
+  2: 'route3',
+  3: 'route2',
+  4: 'route1'
 };
 const FINAL_IMAGE_CLUE_TEXT = '终极线索如下图：';
 const FINAL_IMAGE_CLUE_URL = '/route-images/final-clue.png';
