@@ -6,10 +6,20 @@
       "number": 1,
       "name": "第1组",
       "members": [],
-      "points": 3,
-      "solvedStations": [],
+      "points": 5,
+      "solvedStations": [
+        "s3"
+      ],
       "solvedRouteQuestions": [],
-      "clues": [],
+      "clues": [
+        {
+          "stationId": "s3",
+          "routeQuestionId": null,
+          "clue": "音沉独对海棠残，\n棠棣难寻连理枝。\n枝冷孤灯人不寐，\n寐中唯见月如钩。",
+          "clueImageUrl": null,
+          "at": "2026-04-25T04:34:09.224Z"
+        }
+      ],
       "boughtHints": {},
       "finalAnswerVerified": false,
       "releasedStationOrder": 1,
@@ -58,7 +68,18 @@
       "createdAt": "2026-04-21T00:00:03.000Z"
     }
   ],
-  "submissions": [],
+  "submissions": [
+    {
+      "id": "1CYMN_SXrJ",
+      "teamId": "team-1",
+      "stationId": "s3",
+      "routeQuestionId": null,
+      "answer": "光华里",
+      "result": "correct",
+      "delta": 2,
+      "at": "2026-04-25T04:34:09.224Z"
+    }
+  ],
   "settings": {
     "teamSwitchEnabled": true
   }
