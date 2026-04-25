@@ -7,7 +7,6 @@ const elements = {
   releaseControlCard: document.querySelector('#release-control-card'),
   releaseNextForm: document.querySelector('#release-next-form'),
   releaseTeam: document.querySelector('#release-team'),
-  releasePoints: document.querySelector('#release-points'),
   releaseResult: document.querySelector('#release-result'),
   teamSwitchSettingForm: document.querySelector('#team-switch-setting-form'),
   teamSwitchSettingBtn: document.querySelector('#team-switch-setting-btn'),
@@ -198,20 +197,16 @@ elements.releaseNextForm.addEventListener('submit', async (event) => {
 
   try {
     const teamId = elements.releaseTeam.value;
-    const points = Number(elements.releasePoints.value);
-    if (![1, 2, 3, 4].includes(points)) {
-      throw new Error('仅支持 +1、+2、+3、+4 分。');
-    }
 
     const result = await request(`/api/teams/${teamId}/release-next`, {
       method: 'POST',
-      body: JSON.stringify({ activityPoints: points })
+      body: JSON.stringify({})
     });
 
     if (result.isMax) {
-      setReleaseResult(`该组已是最后一个地点，本次仅记录 +${result.addedPoints || points} 分。`, 'ok');
+      setReleaseResult('该组已是最后一个地点。', 'ok');
     } else {
-      setReleaseResult(`已记录 +${result.addedPoints || points} 分，并放行到 ${result.releasedStationCode || '-'} 点。`, 'ok');
+      setReleaseResult(`已放行到 ${result.releasedStationCode || '-'} 点。`, 'ok');
     }
     await refreshJudge();
   } catch (error) {

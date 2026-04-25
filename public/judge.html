@@ -13,7 +13,7 @@
     <header class="hero">
       <p class="tag">Ci Jian Xun Ji</p>
       <h1>此间循迹 · 裁判端</h1>
-      <p class="subtitle">放行地点并记录体育活动加分，页面自动刷新同步。</p>
+      <p class="subtitle">放行地点与查看进度，页面自动刷新同步。</p>
       <p class="portal-link"><a href="/">返回玩家端</a></p>
     </header>
 
@@ -31,23 +31,14 @@
       </section>
 
       <section class="card" id="release-control-card" hidden>
-        <h2>放行与加分</h2>
+        <h2>放行地点</h2>
         <div class="card-subtitle"><button id="judge-logout-btn" class="secondary-btn" type="button">退出裁判端</button></div>
         <form id="release-next-form">
           <label>
             选择小组
             <select id="release-team" required></select>
           </label>
-          <label>
-            地点体育活动加分
-            <select id="release-points" required>
-              <option value="1">+1 分</option>
-              <option value="2">+2 分</option>
-              <option value="3">+3 分</option>
-              <option value="4">+4 分</option>
-            </select>
-          </label>
-          <button type="submit">记录加分并放行下一地点</button>
+          <button type="submit">放行下一地点</button>
         </form>
         <div id="release-result" class="result"></div>
 
@@ -68,6 +59,6 @@
       </section>
     </main>
 
-    <script src="judge.js?v=20260420_1"></script>
+    <script src="judge.js?v=20260425_1"></script>
   </body>
 </html>

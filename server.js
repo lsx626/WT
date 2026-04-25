@@ -842,10 +842,6 @@ app.patch('/api/teams/:teamId/points', requireJudgeAuth, asyncHandler(async (req
 
 app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async (req, res) => {
   const { teamId } = req.params;
-  const rawPoints = Number(req.body?.activityPoints);
-  if (![1, 2, 3, 4].includes(rawPoints)) {
-    throw new HttpError(400, 'activityPoints 仅允许 1、2、3、4。');
-  }
 
   const payload = await mutateDb((db) => {
     const team = db.teams.find((item) => item.id === teamId);
@@ -856,8 +852,6 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
 
     const stationSequence = getTeamStationIdSequence(db.stations, team.number);
     const maxOrder = Math.max(1, stationSequence.length || 1);
-    const addedPoints = rawPoints;
-    team.points = Math.max(0, roundScore(team.points + addedPoints));
 
     const currentIndex = Math.max(0, Math.min(maxOrder - 1, (team.releasedStationOrder || 1) - 1));
     const completedStation = stationSequence[currentIndex] || null;
@@ -888,15 +882,15 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
         teamId,
         stationId: null,
         answer: null,
-        result: 'judge-points',
-        delta: addedPoints,
-        reason: '地点体育活动加分（末站）',
+        result: 'release-next',
+        delta: 0,
+        reason: '裁判放行（末站）',
         at: new Date().toISOString()
       });
 
       return {
         points: team.points,
-        addedPoints,
+        addedPoints: 0,
         releasedStationOrder: team.releasedStationOrder,
         releasedStationCode: releasedStation?.code || '',
         releasedStationId: releasedStation?.id || '',
@@ -912,14 +906,14 @@ app.post('/api/teams/:teamId/release-next', requireJudgeAuth, asyncHandler(async
       stationId: null,
       answer: null,
       result: 'release-next',
-      delta: addedPoints,
+      delta: 0,
       reason: `裁判放行 ${releasedStation?.code || `${team.releasedStationOrder}号地点`}`,
       at: new Date().toISOString()
     });
 
     return {
       points: team.points,
-      addedPoints,
+      addedPoints: 0,
       releasedStationOrder: team.releasedStationOrder,
       releasedStationCode: releasedStation?.code || '',
       releasedStationId: releasedStation?.id || '',
