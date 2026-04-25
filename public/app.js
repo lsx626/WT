@@ -493,14 +493,6 @@ function getTeamLabel(team, fallbackNumber = 0) {
   return `第${derivedNumber}组`;
 }
 
-function getTeamMemberCount(team) {
-  return Array.isArray(team?.members) ? team.members.length : 0;
-}
-
-function isTeamFull(team) {
-  return getTeamMemberCount(team) >= 4;
-}
-
 function getCleanStationTitle(station, stationCode = '') {
   const rawTitle = String(station?.title || '').trim();
   const titleWithoutRoute = rawTitle.replace(/（[^）]*->[\s\S]*?）/g, '').trim();
@@ -978,12 +970,6 @@ elements.chooseTeamForm.addEventListener('submit', async (event) => {
   const selectedTeamId = elements.setupExistingTeam.value;
   if (!selectedTeamId) {
     alert('请先选择一个组别。');
-    return;
-  }
-
-  const selectedTeam = state.teams.find((team) => team.id === selectedTeamId);
-  if (isTeamFull(selectedTeam)) {
-    setResult('该组人数已满', 'bad');
     return;
   }
 

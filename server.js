@@ -12,7 +12,6 @@ const DB_RUNTIME_PATH = path.join(__dirname, 'data', 'runtime.json');
 const JUDGE_PASSWORD = process.env.JUDGE_PASSWORD || '777777';
 const JUDGE_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_TEAMS = 4;
-const MAX_TEAM_MEMBERS = 4;
 const RUNTIME_SCHEMA_VERSION = 2;
 const TEAM_STATION_CODE_SEQUENCES = {
   1: ['C', 'A', 'D', 'B'],
@@ -72,8 +71,7 @@ function sanitizeTeamMembers(members) {
 
   return members
     .map((item) => String(item || '').trim())
-    .filter(Boolean)
-    .slice(0, MAX_TEAM_MEMBERS);
+    .filter(Boolean);
 }
 
 function sanitizeStringArray(value) {
